@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "bmad-agent-architect": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "3e3f6f26225f3246eebc04f6a7595bab3863136ed69e252d38d301fa37591326"
+    },
+    "bmad-agent-dev": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "bf5a48e190713923639768c61e0bebe5e8bd089d69b8d20baf69b5cbcc5594df"
+    },
+    "bmad-agent-pm": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "49161d5ef10ba1efc9cc48116e1faa00eda28a26f158d93b155fd41b8e8ee037"
+    },
+    "bmad-agent-tech-writer": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "279b6f81a696ad59bc309b449439e3928c7ab371d99d2872a9b0610892057553"
+    },
+    "bmad-agent-ux-designer": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "0365eac8131d897d3e2016ff73f4d4c3a678283a029c62695b643e2b89a5f88e"
+    },
+    "bmad-brainstorming": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "5e665d377efe03b9a8a7a6e0b4ea232e695c27e906f4e51317f8447f0c28af5f"
+    },
+    "bmad-create-architecture": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "e0181f66ecb1bcacaf84203b9c78983087de8a2277432568ecd1e90cecd6441f"
+    },
+    "bmad-create-prd": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "d0830fc47e75fa1d29d6e9185fb5c1473b0fb4f031974f8ee647c5a41d32b911"
+    },
+    "bmad-create-ux-design": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "76f84361328bcd037b3e2e10afb8dd1aba467712d84ea3f5f3522251f974162a"
+    },
+    "bmad-document-project": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "f324683ffa6dd302566f332fe41647c8acd45132ed6129896859369cfefa8ed3"
+    },
+    "bmad-edit-prd": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "e6f428e9606710755c6cbee43ff7bfc073831adaabb0a593838cb99a939bd2cc"
+    },
+    "bmad-generate-project-context": {
+      "source": "bmad-code-org/BMAD-METHOD",
+      "sourceType": "github",
+      "computedHash": "8fc22c4c4d3e6955af63389fe89576112d65f6ec6d9f095498a92f751973cc8e"
+    }
+  }
+}
