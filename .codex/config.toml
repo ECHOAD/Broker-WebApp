@@ -2,3 +2,19 @@
 url = "https://stitch.googleapis.com/mcp"
 enabled = true
 env_http_headers = { "X-Goog-Api-Key" = "STITCH_API_KEY" }
+
+[mcp_servers.stitch.tools.create_project]
+approval_mode = "approve"
+
+[mcp_servers.stitch.tools.create_design_system]
+approval_mode = "approve"
+
+[mcp_servers.stitch.tools.edit_screens]
+approval_mode = "approve"
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=pnpvibwgbmwldxwazlmo&features=docs%2Cdatabase%2Cdevelopment%2Cstorage"
+enabled = true
+
+[mcp_servers.supabase.tools.execute_sql]
+approval_mode = "approve"
+

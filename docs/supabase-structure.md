@@ -1,0 +1,62 @@
+# Supabase Structure
+
+**Base:** `Supabase Postgres + Auth + Storage`
+**Fecha:** `2026-04-05`
+
+## Dominios principales
+
+- `profiles`: perfil operativo ligado a `auth.users`.
+- `property_types`: catalogo extensible de tipos de inmueble. Se sembraron `lot`, `villa` y `building`.
+- `projects`: agrupadores publicos para propiedades.
+- `properties`: inventario comercial con estado, modo de listing, moneda base y publicacion.
+- `property_media`: referencia de assets en Storage para cada propiedad.
+- `favorites`: relacion usuario autenticado -> propiedad.
+- `leads`: identidad comercial y captura de contacto, consentimiento, source y tracking WhatsApp.
+- `lead_property_interests`: une leads con una o varias propiedades de interes.
+- `lead_status_history`: historial del funnel comercial.
+- `closures`: cierre manual asociado a lead + propiedad.
+- `audit_logs`: trazabilidad de cambios en proyectos, propiedades, leads y cierres.
+
+## Decisiones de arquitectura
+
+- Todas las tablas del dominio viven en `public` pero con `RLS` habilitado desde el inicio.
+- Los helpers sensibles viven en `private` para no exponer funciones privilegiadas por API.
+- La autorizacion de admin se evalua con `auth.jwt() -> app_metadata.role = broker_admin`.
+- El flujo de registro crea automaticamente `profiles` con trigger sobre `auth.users`.
+- El historial de estados de lead se crea por trigger cuando nace o cambia `current_status`.
+- La auditoria tambien se resuelve por triggers para evitar huecos de trazabilidad.
+- La media publica vive en bucket `property-media`, publico para lectura y restringido a admins para gestion.
+
+## Seguridad aplicada
+
+- Lectura publica solo para `projects`, `properties`, `property_types` y `property_media` cuando el activo esta publicado.
+- `favorites` queda limitado al usuario autenticado dueño del registro.
+- `leads`, `lead_property_interests`, `lead_status_history`, `closures` y `audit_logs` quedan cerrados a broker admins, salvo lectura propia de leads/intereses/historial para el usuario autenticado vinculado.
+- La subida y gestion de archivos de `property-media` queda solo para admins.
+- El cambio de `profiles.role` queda bloqueado para no-admins.
+
+## Observaciones operativas
+
+- El esquema asume que la captura publica de leads y las operaciones sensibles pasaran por handlers server-side.
+- `profiles.role` existe como espejo operativo, pero la autorizacion fuerte se apoya en `app_metadata.role`.
+- El soporte bilingue del producto se cubre en la capa de aplicacion; en base se persiste `preferred_language` y el contexto de idioma del lead.
+- La estructura admite propiedades con o sin proyecto y precio exacto o `on_request`.
+
+## Bootstrap del primer broker admin
+
+- Hoy `auth.users` esta vacio, asi que no habia usuario real para promover durante esta sesion.
+- Quedo creada la funcion privada `private.bootstrap_first_broker_admin(target_user_id uuid)`.
+- Esa funcion solo permite promover al primer admin si todavia no existe ningun `broker_admin` en `auth.users.raw_app_meta_data`.
+- Tambien quedo el trigger `on_auth_user_updated_profile_sync` para reflejar cambios de `raw_app_meta_data.role` en `public.profiles.role`.
+
+### Paso operativo
+
+1. Registrar el primer usuario en Supabase Auth.
+2. Obtener su `id` desde `auth.users`.
+3. Ejecutar:
+
+```sql
+select private.bootstrap_first_broker_admin('USER_UUID_AQUI');
+```
+
+4. Hacer logout/login o refrescar sesion para que el nuevo JWT incluya `app_metadata.role = broker_admin`.
