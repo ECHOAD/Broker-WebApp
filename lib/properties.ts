@@ -19,6 +19,9 @@ export type PropertyCardData = {
   status: string;
   location: string;
   priceLabel: string;
+  priceAmount: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
   area: string;
   pitch: string;
   coverImageUrl: string | null;
@@ -191,6 +194,7 @@ function mapPropertyRecord(
     status: translateStatus(property.commercial_status),
     location,
     priceLabel: resolvePriceLabel(property),
+    priceAmount: property.price_amount,
     area: formatAreaLabel(property),
     pitch: summary,
     story: description,

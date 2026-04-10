@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AuthMagicLinkForm } from "@/components/auth-magic-link-form";
+import { AuthPasswordForm } from "@/components/auth-magic-link-form";
 import { SitePage } from "@/components/layout/site-page";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,10 +7,15 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     next?: string;
+    pendingFavorite?: string;
   }>;
 };
 
-function normalizeNextPath(next?: string) {
+function normalizeNextPath(next?: string, pendingFavorite?: string) {
+  if (pendingFavorite) {
+    return "/favoritos";
+  }
+
   if (!next || !next.startsWith("/")) {
     return "/favoritos";
   }
@@ -19,8 +24,8 @@ function normalizeNextPath(next?: string) {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, next } = await searchParams;
-  const nextPath = normalizeNextPath(next);
+  const { error, next, pendingFavorite } = await searchParams;
+  const nextPath = normalizeNextPath(next, pendingFavorite);
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,7 +38,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <SitePage>
       <section className="section">
-        <AuthMagicLinkForm initialError={error ?? null} nextPath={nextPath} />
+        <AuthPasswordForm
+          initialError={error ?? null}
+          nextPath={nextPath}
+          pendingFavorite={pendingFavorite ?? null}
+        />
       </section>
     </SitePage>
   );

@@ -176,9 +176,7 @@ export function PropertyLeadForm({
         </Button>
 
         <p className="lead-form__meta">
-          {whatsappPhone
-            ? `WhatsApp de destino: ${whatsappPhone}`
-            : "Si no hay WhatsApp configurado, la consulta igual se guardara en Supabase."}
+          WhatsApp de destino: 8299619147
         </p>
       </form>
     </div>

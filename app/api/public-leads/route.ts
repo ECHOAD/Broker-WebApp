@@ -3,6 +3,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { Database } from "@/lib/supabase/database.types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const DEFAULT_WHATSAPP_DESTINATION = "8299619147";
 
 type PropertyLeadTarget = Pick<
   Database["public"]["Tables"]["properties"]["Row"],
@@ -91,18 +92,10 @@ export async function POST(request: Request) {
     );
   }
 
-  let whatsappPhone = property.whatsapp_phone;
+  let whatsappPhone = DEFAULT_WHATSAPP_DESTINATION;
 
-  if (!whatsappPhone && property.project_id) {
-    const { data: projectData } = await supabase
-      .from("projects")
-      .select("whatsapp_phone")
-      .eq("id", property.project_id)
-      .maybeSingle();
-
-    const project = projectData as ProjectContactTarget | null;
-    whatsappPhone = project?.whatsapp_phone ?? null;
-  }
+  // Override destination as requested by product requirements.
+  // The lead still records under the selected property, but WhatsApp messages always go to the fixed number.
 
   const sourcePath = `/propiedades/${property.slug}`;
   const consentCapturedAt = new Date().toISOString();
@@ -163,9 +156,7 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join(" ");
 
-  const redirectUrl = whatsappPhone
-    ? `https://wa.me/${normalizeWhatsAppPhone(whatsappPhone)}?text=${encodeURIComponent(whatsappText)}`
-    : `/catalogo?lead=${leadId}`;
+  const redirectUrl = `https://wa.me/${normalizeWhatsAppPhone(whatsappPhone)}?text=${encodeURIComponent(whatsappText)}`;
 
   return NextResponse.json({
     ok: true,

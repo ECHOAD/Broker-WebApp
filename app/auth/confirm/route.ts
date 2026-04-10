@@ -7,10 +7,21 @@ function resolveNextPath(request: NextRequest) {
   return next.startsWith("/") ? next : "/favoritos";
 }
 
+async function savePendingFavorite(supabase: Awaited<ReturnType<typeof createClient>>, pendingFavorite: string | null) {
+  if (!pendingFavorite) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("favorites").upsert({
+    profile_id: user.id,
+    property_id: pendingFavorite,
+  });
+}
+
 export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const type = request.nextUrl.searchParams.get("type") as EmailOtpType | null;
   const code = request.nextUrl.searchParams.get("code");
+  const pendingFavorite = request.nextUrl.searchParams.get("pendingFavorite");
   const nextPath = resolveNextPath(request);
   const redirectTo = request.nextUrl.clone();
   redirectTo.pathname = nextPath;
@@ -18,6 +29,7 @@ export async function GET(request: NextRequest) {
   redirectTo.searchParams.delete("type");
   redirectTo.searchParams.delete("code");
   redirectTo.searchParams.delete("next");
+  redirectTo.searchParams.delete("pendingFavorite");
 
   const supabase = await createClient();
 
@@ -28,6 +40,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
+      await savePendingFavorite(supabase, pendingFavorite);
       return NextResponse.redirect(redirectTo);
     }
   }
@@ -36,6 +49,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      await savePendingFavorite(supabase, pendingFavorite);
       return NextResponse.redirect(redirectTo);
     }
   }
