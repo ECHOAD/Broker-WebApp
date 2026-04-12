@@ -5,17 +5,19 @@ import { ChevronDown, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SelectFieldProps extends React.ComponentProps<"select"> {
-  label: string;
+  label?: string;
   icon?: LucideIcon;
 }
 
 export function SelectField({ label, icon: Icon, className, children, ...props }: SelectFieldProps) {
   return (
     <div className={cn("grid gap-1.5", className)}>
-      <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40 ml-1">
-        {Icon && <Icon className="w-3 h-3" />}
-        {label}
-      </label>
+      {label && (
+        <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40 ml-1">
+          {Icon && <Icon className="w-3 h-3" />}
+          {label}
+        </label>
+      )}
       <div className="relative">
         <select
           {...props}
