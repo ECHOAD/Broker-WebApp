@@ -5,7 +5,7 @@ import { uploadProjectLogo, deleteProjectLogo } from "@/app/admin/projects/actio
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { UploadCloud, Trash2, ShieldCheck } from "lucide-react";
+import { UploadCloud, Trash2, RefreshCw, BadgeCheck, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ProjectLogoUploaderProps = {
@@ -39,7 +39,7 @@ export function ProjectLogoUploader({ projectId, initialLogoPath }: ProjectLogoU
 
   async function handleDelete() {
     if (!initialLogoPath) return;
-    if (!confirm("¿Estas seguro de eliminar el logo del proyecto?")) return;
+    if (!confirm("¿Deseas eliminar el sello de marca del proyecto?")) return;
 
     const formData = new FormData();
     formData.append("projectId", projectId);
@@ -58,56 +58,65 @@ export function ProjectLogoUploader({ projectId, initialLogoPath }: ProjectLogoU
     : { data: { publicUrl: null } };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-6">
-      {/* Logo Preview */}
-      <Card className={cn(
-        "relative w-28 h-28 overflow-hidden flex items-center justify-center transition-all shrink-0",
-        initialLogoPath ? "bg-slate-900 border-none shadow-md" : "bg-slate-50 border-2 border-dashed border-slate-200"
-      )}>
-        {publicData.publicUrl ? (
-          <img
-            src={publicData.publicUrl}
-            alt="Project Logo"
-            className="w-full h-full object-contain p-4 filter brightness-0 invert"
-          />
-        ) : (
-          <ShieldCheck className="w-8 h-8 text-slate-200" />
-        )}
-      </Card>
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative group">
+        {/* Logo Container (The Seal) */}
+        <div className={cn(
+          "relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 overflow-hidden border-4 shadow-2xl",
+          initialLogoPath 
+            ? "bg-[#0A0A0A] border-white/10 shadow-black/20 scale-100 group-hover:scale-105" 
+            : "bg-slate-50 border-slate-100 border-dashed border-2 hover:bg-slate-100"
+        )}>
+          {publicData.publicUrl ? (
+            <img
+              src={publicData.publicUrl}
+              alt="Project Brand"
+              className="w-full h-full object-contain p-6 filter brightness-0 invert transition-transform duration-700"
+            />
+          ) : (
+            <div className="flex flex-col items-center text-slate-300">
+              <Plus className="w-6 h-6 mb-1 opacity-40" />
+              <span className="text-[8px] font-black uppercase tracking-tighter">Sello</span>
+            </div>
+          )}
 
-      {/* Actions */}
-      <div className="flex flex-col gap-3 flex-1 w-full sm:w-auto">
-        <div className="relative">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={isUploading}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-wait z-10"
-          />
-          <Button 
-            type="button"
-            className="w-full sm:w-auto h-10 bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-wider px-6 shadow-sm"
-            disabled={isUploading}
-          >
-            {isUploading ? "Subiendo..." : initialLogoPath ? "Cambiar Logo" : "Subir Logo Comercial"}
-          </Button>
+          {/* Overlay Interaction */}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-[2px]">
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+              <button className="text-white text-[9px] font-bold uppercase tracking-widest bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors">
+                {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Cambiar"}
+              </button>
+            </div>
+            {initialLogoPath && (
+              <button 
+                type="button"
+                onClick={handleDelete}
+                className="text-red-400 text-[8px] font-bold uppercase hover:text-red-300 transition-colors"
+              >
+                Eliminar
+              </button>
+            )}
+          </div>
         </div>
-        
+
+        {/* Status Badge */}
         {initialLogoPath && (
-          <button 
-            type="button"
-            onClick={handleDelete}
-            className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors flex items-center gap-1.5 px-1"
-          >
-            <Trash2 className="w-3 h-3" />
-            Eliminar logo actual
-          </button>
+          <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+            <BadgeCheck className="w-3.5 h-3.5" />
+          </div>
         )}
-        
-        <p className="text-[9px] text-slate-400 leading-relaxed font-medium max-w-[220px]">
-          Se recomienda una imagen en formato **PNG con fondo transparente**.
-        </p>
+      </div>
+      
+      <div className="text-center">
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest m-0">Sello de Identidad</p>
+        <p className="text-[8px] text-slate-300 italic m-0">PNG / Fondo Transparente</p>
       </div>
     </div>
   );

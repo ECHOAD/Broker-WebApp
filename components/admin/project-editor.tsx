@@ -27,9 +27,13 @@ import {
   CheckCircle2,
   Info,
   Link as LinkIcon,
-  HelpCircle
+  HelpCircle,
+  UploadCloud,
+  Eye,
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type ProjectOption = {
   value: string;
@@ -71,15 +75,19 @@ export function ProjectEditor({
   locations,
 }: ProjectEditorProps) {
   const [selectedLocationId, setSelectedLocationId] = useState(selectedProject?.locationId ?? "");
+  
+  // State for unified flow
+  const [pendingMainImage, setPendingMainImage] = useState<File | null>(null);
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null);
 
   if (!currentProjectId) {
     return (
       <div className="h-[600px] flex items-center justify-center bg-white/30 rounded-[40px] border-2 border-dashed border-slate-200 text-center px-6">
-        <div className="max-w-xs space-y-4">
+        <div className="max-w-xs space-y-4 text-slate-900">
           <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-300">
             <LayoutGrid className="w-8 h-8" />
           </div>
-          <h3 className="font-serif text-xl text-slate-900">¿Qué quieres hacer hoy?</h3>
+          <h3 className="font-serif text-xl">¿Qué quieres hacer hoy?</h3>
           <p className="text-sm text-slate-500">Selecciona un proyecto de la izquierda para editarlo o presiona el botón de "Nuevo" para crear uno desde cero.</p>
         </div>
       </div>
@@ -103,9 +111,13 @@ export function ProjectEditor({
       <input name="selectedPropertyId" type="hidden" value={currentPropertyId ?? ""} />
       <input name="locationId" type="hidden" value={selectedLocationId} />
 
-      {/* BARRA DE ACCIÓN PRINCIPAL */}
+      {/* HIDDEN FILE INPUTS */}
+      <input type="file" name="mainImageFile" className="hidden" id="main-image-hidden-input" onChange={(e) => setPendingMainImage(e.target.files?.[0] ?? null)} />
+      <input type="file" name="logoFile" className="hidden" id="logo-hidden-input" onChange={(e) => setPendingLogo(e.target.files?.[0] ?? null)} />
+
+      {/* BARRA DE ACCIÓN SUPERIOR */}
       <div className="sticky top-6 z-50">
-        <div className="bg-white/95 backdrop-blur-xl border border-blue-100 shadow-[0_20px_50px_rgba(0,0,0,0.06)] rounded-[2.5rem] p-3 pl-8 flex items-center justify-between gap-4">
+        <div className="bg-white/95 backdrop-blur-xl border border-blue-100 shadow-[0_20px_50px_rgba(0,0,0,0.06)] rounded-[2.5rem] p-3 pl-8 flex items-center justify-between gap-4 text-slate-900">
           <div className="flex items-center gap-4">
             <div className={cn(
               "w-10 h-10 rounded-full flex items-center justify-center shadow-inner",
@@ -115,186 +127,175 @@ export function ProjectEditor({
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 m-0 mb-1 leading-none">
-                {isNew ? "Paso 1: Crear nuevo" : "Editando ahora"}
+                {isNew ? "Nuevo Proyecto" : "Editando ahora"}
               </p>
               <h2 className="font-serif text-lg text-slate-900 m-0 leading-none truncate max-w-[200px] md:max-w-md">
-                {isNew ? "Nueva ficha de proyecto" : selectedProject?.name}
+                {isNew ? "Ficha de Registro" : selectedProject?.name}
               </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {!isNew && (
-              <Button 
-                variant="ghost"
-                className="hidden md:flex text-slate-400 hover:text-red-600 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest" 
-                formAction={archiveProject} 
-                type="submit"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                Quitar de la web
-              </Button>
+              <>
+                <Button asChild variant="tertiary" className="hidden md:flex text-slate-600 hover:text-blue-600 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest border border-slate-100">
+                  <Link href={`/catalogo?project=${selectedProject?.name}`} target="_blank">
+                    <Eye className="w-4 h-4 mr-2" /> Ver Preview
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="hidden md:flex text-slate-400 hover:text-red-600 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest" formAction={archiveProject} type="submit">
+                  <Archive className="w-4 h-4 mr-2" /> Archivar
+                </Button>
+              </>
             )}
             <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] h-12 px-10 font-bold uppercase tracking-widest text-[11px] shadow-xl shadow-blue-100 transition-all active:scale-95" type="submit">
-              <Save className="w-4 h-4 mr-2" />
-              {isNew ? "Guardar y Continuar" : "Guardar todos los cambios"}
+              <Save className="w-4 h-4 mr-2" /> {isNew ? "Guardar Proyecto" : "Guardar cambios"}
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      {/* PASO 1: FOTO DE PORTADA (FULL WIDTH) */}
+      <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-8 text-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-50 pb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
+              <h3 className="font-serif text-2xl m-0">Presencia Visual</h3>
+            </div>
+            <p className="text-sm text-slate-500 pl-11">Esta foto será el fondo principal del proyecto. Usa una imagen impactante.</p>
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto w-full">
+          {isNew ? (
+            <label 
+              htmlFor="main-image-hidden-input"
+              className={cn(
+                "relative aspect-[21/9] w-full overflow-hidden flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] cursor-pointer hover:bg-slate-100 transition-all group",
+                pendingMainImage && "border-blue-200 bg-blue-50/30"
+              )}
+            >
+              {pendingMainImage ? (
+                <img src={URL.createObjectURL(pendingMainImage)} className="w-full h-full object-cover rounded-[2.8rem]" alt="Preview" />
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-slate-300 group-hover:text-blue-500 transition-all group-hover:scale-110">
+                    <Camera className="w-7 h-7" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Click para subir foto de portada</span>
+                </div>
+              )}
+            </label>
+          ) : (
+            <ProjectImageUploader projectId={selectedProject!.id} initialImagePath={selectedProject!.mainImageStoragePath} />
+          )}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* COLUMNA DE CONTENIDO */}
-        <div className="lg:col-span-8 space-y-10">
+        {/* COLUMNA IZQUIERDA: DATOS Y TEXTOS */}
+        <div className="lg:col-span-8 space-y-8 text-slate-900">
           
-          {/* PASO 1: NOMBRE Y SITIO */}
-          <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5 text-slate-900">
-              <Info className="w-24 h-24" />
-            </div>
-            
-            <div className="space-y-2 relative z-10">
-              <div className="flex items-center gap-3 text-slate-900">
-                <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
-                <h3 className="font-serif text-2xl m-0">Datos de Identidad</h3>
+          {/* PASO 2: IDENTIDAD (INCLUYE LOGO) */}
+          <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-10 relative">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">2</span>
+                <h3 className="font-serif text-2xl m-0">Identidad del Proyecto</h3>
               </div>
-              <p className="text-sm text-slate-500 pl-11">Así es como identificaremos este proyecto en el sistema y en internet.</p>
+              <p className="text-sm text-slate-500 pl-11">Aquí definimos el nombre, la marca y dónde se ubica.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <FormField 
-                label="Nombre del Proyecto" 
-                hint="Es el nombre comercial. Ej: Ocean Sky Residences."
-              >
-                <Input 
-                  defaultValue={selectedProject?.name ?? ""} 
-                  name="name" 
-                  required 
-                  placeholder="Escribe el nombre aquí..."
-                />
-              </FormField>
-              <FormField 
-                label="Enlace en la Web" 
-                hint="Es la dirección única del proyecto en internet. Se genera automáticamente si lo dejas vacío."
-              >
-                <div className="relative">
-                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                  <Input 
-                    defaultValue={selectedProject?.slug ?? ""} 
-                    name="slug" 
-                    placeholder="ejemplo-mi-proyecto"
-                    className="pl-11"
-                  />
-                </div>
-              </FormField>
-            </div>
+            <div className="flex flex-col md:flex-row gap-12 items-center md:items-start">
+              {/* Brand Seal Area */}
+              <div className="shrink-0">
+                {isNew ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <label 
+                      htmlFor="logo-hidden-input"
+                      className={cn(
+                        "relative w-32 h-32 rounded-full overflow-hidden flex items-center justify-center cursor-pointer transition-all duration-500 border-4 shadow-xl group",
+                        pendingLogo ? "bg-[#0A0A0A] border-white/10" : "bg-slate-50 border-slate-100 border-dashed border-2 hover:bg-slate-100"
+                      )}
+                    >
+                      {pendingLogo ? (
+                        <img src={URL.createObjectURL(pendingLogo)} className="w-full h-full object-contain p-6 filter brightness-0 invert" alt="Logo Preview" />
+                      ) : (
+                        <div className="flex flex-col items-center text-slate-300">
+                          <UploadCloud className="w-6 h-6 mb-1 opacity-40" />
+                          <span className="text-[8px] font-bold uppercase">Logo</span>
+                        </div>
+                      )}
+                    </label>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Sello de Marca</p>
+                  </div>
+                ) : (
+                  <ProjectLogoUploader projectId={selectedProject!.id} initialLogoPath={selectedProject!.logoStoragePath} />
+                )}
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <FormField 
-                label="Ubicación Principal" 
-                hint="Selecciona una zona estandarizada para que los clientes puedan filtrar por localidad."
-              >
-                <SearchableSelect
-                  options={locationOptions}
-                  value={selectedLocationId}
-                  onChange={setSelectedLocationId}
-                  placeholder="Selecciona una zona..."
-                />
-              </FormField>
-
-              <FormField 
-                label="Detalle de Dirección" 
-                hint="Información adicional sobre la ubicación (opcional)."
-              >
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input 
-                    defaultValue={selectedProject?.approximateLocationText ?? ""} 
-                    name="approximateLocationText" 
-                    placeholder="Ej: Cerca de Playa Juanillo"
-                    className="pl-11"
-                  />
+              {/* Identity Fields */}
+              <div className="flex-1 w-full space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <FormField label="Nombre Comercial" hint="Ej: Ocean Sky Residences.">
+                    <Input defaultValue={selectedProject?.name ?? ""} name="name" required placeholder="Escribe el nombre..." className="h-14 text-lg font-medium" />
+                  </FormField>
+                  <FormField label="Enlace en la Web" hint="Dirección única en internet.">
+                    <div className="relative">
+                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                      <Input defaultValue={selectedProject?.slug ?? ""} name="slug" placeholder="ejemplo-enlace" className="pl-11 h-14" />
+                    </div>
+                  </FormField>
                 </div>
-              </FormField>
+
+                <div className="pt-8 border-t border-slate-50 grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <FormField label="Zona Principal" hint="Para los filtros del buscador.">
+                    <SearchableSelect options={locationOptions} value={selectedLocationId} onChange={setSelectedLocationId} />
+                  </FormField>
+                  <FormField label="Referencia de Dirección" hint="Ej: Cerca de Playa Juanillo.">
+                    <Input defaultValue={selectedProject?.approximateLocationText ?? ""} name="approximateLocationText" placeholder="Ubicación exacta..." className="h-14" />
+                  </FormField>
+                </div>
+              </div>
             </div>
           </section>
 
-          {/* PASO 2: TEXTOS PARA EL CLIENTE */}
+          {/* PASO 3: NARRATIVA */}
           <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-10">
             <div className="space-y-2">
-              <div className="flex items-center gap-3 text-slate-900">
-                <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">2</span>
-                <h3 className="font-serif text-2xl m-0">Textos para el Cliente</h3>
-              </div>
-              <p className="text-sm text-slate-500 pl-11">Esta es la información que verán las personas que visiten tu página.</p>
-            </div>
-
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4 items-start text-slate-900">
-              <HelpCircle className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Consejo de Ventas</p>
-                <p className="text-xs text-slate-500 leading-relaxed font-medium">Utiliza palabras que evoquen lujo y comodidad. Asegúrate de mencionar las mejores amenidades del proyecto en la descripción larga.</p>
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">3</span>
+                <h3 className="font-serif text-2xl text-slate-900 m-0">Narrativa de Venta</h3>
               </div>
             </div>
 
-            <FormField 
-              label="Frase de Bienvenida (Título)" 
-              hint="Es el texto grande que impacta al entrar a la ficha del proyecto."
-            >
-              <Input 
-                defaultValue={selectedProject?.headline ?? ""} 
-                name="headline" 
-                placeholder="Ej: El paraíso que siempre soñaste"
-                className="font-serif text-xl italic"
-              />
+            <FormField label="Frase de Bienvenida" hint="Título grande que verá el cliente.">
+              <Input defaultValue={selectedProject?.headline ?? ""} name="headline" placeholder="Título impactante..." className="font-serif text-xl italic h-14" />
             </FormField>
 
-            <FormField 
-              label="Resumen Breve" 
-              hint="Se usa en las tarjetas del catálogo. Manténlo entre 150 y 200 caracteres."
-            >
-              <Textarea 
-                defaultValue={selectedProject?.summary ?? ""} 
-                name="summary" 
-                placeholder="Cuéntales de qué trata este proyecto..."
-              />
+            <FormField label="Resumen Ejecutivo" hint="Párrafo introductorio corto.">
+              <Textarea defaultValue={selectedProject?.summary ?? ""} name="summary" placeholder="Cuéntales de qué trata..." />
             </FormField>
 
-            <FormField 
-              label="Descripción Detallada" 
-              hint="Aquí va toda la información extensa. Puedes incluir listas de amenidades y detalles de construcción."
-            >
-              <Textarea 
-                defaultValue={selectedProject?.description ?? ""} 
-                name="description" 
-                className="min-h-[400px]"
-                placeholder="Explica todos los detalles, amenidades, precios desde, terminaciones..."
-              />
+            <FormField label="Historia y Detalles" hint="Cuerpo completo del texto.">
+              <Textarea defaultValue={selectedProject?.description ?? ""} name="description" className="min-h-[400px]" placeholder="Detalla amenidades, historia, etc..." />
             </FormField>
           </section>
         </div>
 
-        {/* COLUMNA DE AJUSTES */}
-        <div className="lg:col-span-4 space-y-10">
-          
-          {/* VISIBILIDAD */}
+        {/* COLUMNA DERECHA: AJUSTES */}
+        <div className="lg:col-span-4 space-y-8 text-slate-900">
           <section className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-8">
-            <div className="flex items-center gap-3 border-b border-slate-50 pb-6 text-slate-900">
+            <div className="flex items-center gap-3 border-b border-slate-50 pb-6">
               <Globe className="w-5 h-5 text-slate-400" />
               <h3 className="font-serif text-xl m-0">Ajustes Web</h3>
             </div>
 
             <div className="space-y-8">
-              <FormField 
-                label="¿Quién puede ver esto?" 
-                hint="Controla si el proyecto es visible para el público o si aún está en preparación."
-              >
-                <SelectField
-                  label=""
-                  value={selectedProject?.status ?? "draft"}
-                  name="status"
-                >
+              <FormField label="¿Quién puede ver esto?" hint="Control de visibilidad pública.">
+                <SelectField defaultValue={selectedProject?.status ?? "draft"} name="status">
                   {simpleStatusOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
@@ -302,93 +303,23 @@ export function ProjectEditor({
               </FormField>
 
               <div className="grid grid-cols-2 gap-6">
-                <FormField 
-                  label="Posición" 
-                  hint="Determina el orden en el listado. Números menores aparecen primero."
-                >
-                  <Input 
-                    defaultValue={String(selectedProject?.sortOrder ?? 0)} 
-                    name="sortOrder" 
-                    type="number" 
-                    className="font-bold text-center text-lg"
-                  />
+                <FormField label="Posición" hint="Orden en el listado.">
+                  <Input defaultValue={String(selectedProject?.sortOrder ?? 0)} name="sortOrder" type="number" className="font-bold text-center text-lg h-12" />
                 </FormField>
-                <FormField 
-                  label="WhatsApp" 
-                  hint="Si incluyes un número aquí, las consultas de este proyecto irán directo a ese móvil."
-                >
-                  <Input 
-                    defaultValue={selectedProject?.whatsappPhone ?? ""} 
-                    name="whatsappPhone" 
-                    placeholder="+1..."
-                  />
+                <FormField label="WhatsApp" hint="Número de atención.">
+                  <Input defaultValue={selectedProject?.whatsappPhone ?? ""} name="whatsappPhone" placeholder="+1..." className="h-12" />
                 </FormField>
               </div>
 
               <Switch 
                 label="Destacar Proyecto"
-                description="Se mostrará en la portada"
+                description="Ver en portada principal"
                 name="isFeatured"
                 defaultChecked={selectedProject?.isFeatured ?? false}
                 icon={<Star className={cn("w-5 h-5", selectedProject?.isFeatured && "fill-current")} />}
               />
             </div>
           </section>
-
-          {/* FOTOS Y LOGO */}
-          <section className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-8">
-            <div className="flex items-center gap-3 border-b border-slate-50 pb-6 text-slate-900">
-              <ImageIcon className="w-5 h-5 text-slate-400" />
-              <h3 className="font-serif text-xl m-0">Fotos y Logo</h3>
-            </div>
-
-            {!isNew && selectedProject ? (
-              <div className="space-y-12">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Foto Principal</h4>
-                    {selectedProject.mainImageStoragePath ? (
-                      <Badge className="bg-emerald-50 text-emerald-600 text-[8px] font-bold uppercase border-none px-2">Subida</Badge>
-                    ) : (
-                      <Badge className="bg-amber-50 text-amber-600 text-[8px] font-bold uppercase border-none px-2">Pendiente</Badge>
-                    )}
-                  </div>
-                  <ProjectImageUploader 
-                    projectId={selectedProject.id} 
-                    initialImagePath={selectedProject.mainImageStoragePath} 
-                  />
-                </div>
-
-                <div className="pt-8 border-t border-slate-50 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Logo del Proyecto</h4>
-                    {selectedProject.logoStoragePath ? (
-                      <Badge className="bg-emerald-50 text-emerald-600 text-[8px] font-bold uppercase border-none px-2">Subida</Badge>
-                    ) : (
-                      <Badge className="bg-slate-50 text-slate-400 text-[8px] font-bold uppercase border-none px-2">Opcional</Badge>
-                    )}
-                  </div>
-                  <ProjectLogoUploader 
-                    projectId={selectedProject.id} 
-                    initialLogoPath={selectedProject.logoStoragePath} 
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="py-12 px-6 bg-blue-50/50 rounded-[2.5rem] border border-dashed border-blue-100 flex flex-col items-center text-center gap-4 text-slate-900">
-                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm text-blue-400">
-                  <ImageIcon className="w-7 h-7" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-blue-900">Habilitar Fotos</p>
-                  <p className="text-xs text-blue-600 leading-relaxed font-medium">
-                    Primero guarda los datos básicos del proyecto arriba para poder subir sus fotos.
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
-
         </div>
       </div>
     </form>

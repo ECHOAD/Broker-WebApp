@@ -5,7 +5,7 @@ import { uploadProjectMainImage, deleteProjectMainImage } from "@/app/admin/proj
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Image as ImageIcon, Trash2, UploadCloud, CheckCircle2 } from "lucide-react";
+import { Image as ImageIcon, Trash2, UploadCloud, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ProjectImageUploaderProps = {
@@ -30,7 +30,7 @@ export function ProjectImageUploader({ projectId, initialImagePath }: ProjectIma
       await uploadProjectMainImage(formData);
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("Error al subir la imagen de portada.");
+      alert("Error al subir la imagen.");
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -58,80 +58,54 @@ export function ProjectImageUploader({ projectId, initialImagePath }: ProjectIma
     : { data: { publicUrl: null } };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-slate-400" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Imagen de Portada</span>
-        </div>
-        {initialImagePath && (
-          <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-            <CheckCircle2 className="w-3 h-3" />
-            <span className="text-[9px] font-bold uppercase">Lista</span>
+    <div className="relative group">
+      <Card className={cn(
+        "relative aspect-[21/9] w-full overflow-hidden flex items-center justify-center bg-slate-50 border-2 border-dashed transition-all duration-500 rounded-[2.5rem]",
+        initialImagePath ? "border-transparent shadow-sm" : "border-slate-200 hover:border-blue-300"
+      )}>
+        {publicData.publicUrl ? (
+          <img
+            src={publicData.publicUrl}
+            alt="Project Cover"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3 text-slate-300">
+            <UploadCloud className="w-10 h-10 opacity-20" />
+            <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Sube una foto panorámica</span>
           </div>
         )}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-        <div className="md:col-span-2">
-          <Card className={cn(
-            "relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-slate-50 border-2 border-dashed transition-all duration-500",
-            initialImagePath ? "border-slate-100 shadow-sm" : "border-slate-200 hover:border-slate-300"
-          )}>
-            {publicData.publicUrl ? (
-              <img
-                src={publicData.publicUrl}
-                alt="Project Cover"
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-slate-300">
-                <UploadCloud className="w-8 h-8 opacity-20" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-center px-4">
-                  Sube una foto de alta calidad (16:9)
-                </span>
-              </div>
-            )}
-          </Card>
-        </div>
 
-        <div className="flex flex-col gap-3">
+        {/* OVERLAY ACTIONS */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
           <div className="relative">
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
               disabled={isUploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-wait z-20"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
             />
             <Button 
               type="button"
-              className="w-full h-11 bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+              className="bg-white text-slate-900 hover:bg-white rounded-full h-12 px-6 font-bold text-[10px] uppercase tracking-widest shadow-xl"
               disabled={isUploading}
             >
-              {isUploading ? "Subiendo..." : initialImagePath ? "Reemplazar Foto" : "Subir Foto"}
+              {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : initialImagePath ? "Cambiar Foto" : "Seleccionar Foto"}
             </Button>
           </div>
           
           {initialImagePath && (
             <Button 
               type="button"
-              variant="tertiary" 
               onClick={handleDelete}
-              className="w-full h-11 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 justify-center"
+              className="bg-red-600 text-white hover:bg-red-700 rounded-full w-12 h-12 p-0 shadow-xl"
             >
-              <Trash2 className="w-4 h-4" />
-              Eliminar
+              <Trash2 className="w-5 h-5" />
             </Button>
           )}
-          
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <p className="text-[9px] text-slate-400 leading-relaxed font-medium">
-              Esta imagen se utilizará como fondo en las tarjetas de proyectos y en el encabezado de la página del proyecto. Formato recomendado: JPG o WEBP.
-            </p>
-          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

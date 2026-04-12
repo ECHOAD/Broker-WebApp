@@ -168,6 +168,20 @@ export function computePipelineCounts(leads: Array<{ current_status: LeadStatus 
   }));
 }
 
+export function computeGroupedLeads(leads: Array<{ current_status: LeadStatus }>) {
+  const groups = {
+    nuevos: ["new"],
+    seguimiento: ["contacted", "qualified", "meeting_requested", "meeting_scheduled", "negotiation"],
+    finalizados: ["closed_won", "closed_lost"],
+  };
+
+  return {
+    nuevos: leads.filter((l) => groups.nuevos.includes(l.current_status)).length,
+    seguimiento: leads.filter((l) => groups.seguimiento.includes(l.current_status)).length,
+    finalizados: leads.filter((l) => groups.finalizados.includes(l.current_status)).length,
+  };
+}
+
 export async function listLocations() {
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();

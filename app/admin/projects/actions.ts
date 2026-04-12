@@ -21,7 +21,12 @@ export async function upsertProject(formData: FormData) {
   const description = toNullableText(formData.get("description"));
   const whatsappPhone = toNullableText(formData.get("whatsappPhone"));
   const approximateLocationText = toNullableText(formData.get("approximateLocationText"));
+  const locationId = toNullableText(formData.get("locationId"));
   const sortOrder = toNullableInteger(formData.get("sortOrder")) ?? 0;
+
+  // Files for unified flow
+  const mainImageFile = formData.get("mainImageFile") as File | null;
+  const logoFile = formData.get("logoFile") as File | null;
 
   if (!name || !ALLOWED_PROJECT_STATUSES.includes(status)) {
     redirect(`/admin/projects${projectId ? `/${projectId}` : ""}`);
@@ -40,6 +45,7 @@ export async function upsertProject(formData: FormData) {
     sort_order: sortOrder,
     is_featured: isFeatured,
     approximate_location_text: approximateLocationText,
+    location_id: locationId,
     published_at: status === "published" ? new Date().toISOString() : null,
     updated_by: user.id,
     ...(projectId ? {} : { created_by: user.id }),
@@ -48,14 +54,37 @@ export async function upsertProject(formData: FormData) {
   const query = projectId
     ? supabase.from("projects").update(payload).eq("id", projectId).select("id").single()
     : supabase.from("projects").insert(payload).select("id").single();
-  const { data, error } = await query;
+  const { data, error: dbError } = await query;
 
-  if (error) {
-    throw new Error(error.message);
+  if (dbError) {
+    throw new Error(dbError.message);
+  }
+
+  const finalProjectId = data.id;
+  let updatesAfterUpload: any = {};
+
+  // Handle Main Image if provided in unified form
+  if (mainImageFile && mainImageFile.size > 0) {
+    const fileExt = mainImageFile.name.split(".").pop();
+    const filePath = `projects/covers/${finalProjectId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from("property-media").upload(filePath, mainImageFile);
+    if (!uploadError) updatesAfterUpload.main_image_storage_path = filePath;
+  }
+
+  // Handle Logo if provided in unified form
+  if (logoFile && logoFile.size > 0) {
+    const fileExt = logoFile.name.split(".").pop();
+    const filePath = `projects/logos/${finalProjectId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from("property-media").upload(filePath, logoFile);
+    if (!uploadError) updatesAfterUpload.logo_storage_path = filePath;
+  }
+
+  if (Object.keys(updatesAfterUpload).length > 0) {
+    await supabase.from("projects").update(updatesAfterUpload).eq("id", finalProjectId);
   }
 
   revalidatePath("/admin/projects");
-  redirect(`/admin/projects/${data.id}`);
+  redirect(`/admin/projects/${finalProjectId}`);
 }
 
 export async function archiveProject(formData: FormData) {
