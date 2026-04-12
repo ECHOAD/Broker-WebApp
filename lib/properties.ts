@@ -14,6 +14,7 @@ export type PropertyCardData = {
   title: string;
   badge: string;
   project: string;
+  projectSlug: string | null;
   type: string;
   listingMode: string;
   status: string;
@@ -30,7 +31,6 @@ export type PropertyCardData = {
 export type PropertyDetailData = PropertyCardData & {
   id: string;
   story: string;
-  projectSlug: string | null;
   headline: string | null;
   description: string;
   bedrooms: number | null;
@@ -487,5 +487,49 @@ export async function getFeaturedPublicProjects(limit = 3) {
   }
 
   return Promise.all((data ?? []).map(mapPublicProject));
+}
+
+export async function getPublicProjectBySlugOrName(projectQuery: string) {
+  const normalizedQuery = projectQuery.trim();
+
+  if (!normalizedQuery) {
+    return null;
+  }
+
+  const supabase = createPublicClient();
+
+  const { data: projectBySlug, error: slugError } = await supabase
+    .from("projects")
+    .select(PROJECT_SELECT)
+    .eq("status", "published")
+    .eq("slug", normalizedQuery)
+    .limit(1)
+    .maybeSingle();
+
+  if (slugError) {
+    throw new Error(slugError.message);
+  }
+
+  if (projectBySlug) {
+    return mapPublicProject(projectBySlug);
+  }
+
+  const { data: projectByName, error: nameError } = await supabase
+    .from("projects")
+    .select(PROJECT_SELECT)
+    .eq("status", "published")
+    .eq("name", normalizedQuery)
+    .limit(1)
+    .maybeSingle();
+
+  if (nameError) {
+    throw new Error(nameError.message);
+  }
+
+  if (!projectByName) {
+    return null;
+  }
+
+  return mapPublicProject(projectByName);
 }
 

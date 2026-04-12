@@ -32,7 +32,7 @@ export function PropertySearch({ projects, propertyTypes, locations }: PropertyS
     router.push(`/catalogo?${params.toString()}`);
   };
 
-  const projectOptions = projects.map(p => ({ value: p.name, label: p.name }));
+  const projectOptions = projects.map(p => ({ value: p.slug, label: p.name }));
   const typeOptions = propertyTypes.map(t => ({ value: t.label_es, label: t.label_es }));
   const locationOptions = locations.map(l => ({ value: l, label: l }));
 

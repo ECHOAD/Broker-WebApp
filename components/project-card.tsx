@@ -10,7 +10,7 @@ type ProjectCardProps = {
 export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link 
-      href={`/catalogo?project=${project.name}`}
+      href={`/catalogo?project=${project.slug}`}
       className="group relative block overflow-hidden rounded-[2.5rem] bg-slate-900 aspect-[4/5] shadow-2xl transition-all duration-700 hover:scale-[1.02]"
     >
       {/* Background Image */}

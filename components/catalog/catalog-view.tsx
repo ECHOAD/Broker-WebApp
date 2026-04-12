@@ -2,11 +2,9 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { PageIntro } from "@/components/shared/page-intro";
 import { PropertyCard } from "@/components/property-card";
+import { Badge } from "@/components/ui/badge";
 import { MoneyInput } from "@/components/ui/money-input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { PropertyCardData } from "@/lib/properties";
@@ -17,6 +15,22 @@ type CatalogViewProps = {
 
 function makeOptions(values: string[]) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function resolveProjectFilterValue(properties: PropertyCardData[], queryValue: string | null) {
+  if (!queryValue) {
+    return null;
+  }
+
+  const matchedProperty = properties.find(
+    (property) => property.projectSlug === queryValue || property.project === queryValue,
+  );
+
+  if (!matchedProperty) {
+    return queryValue;
+  }
+
+  return matchedProperty.projectSlug ?? matchedProperty.project;
 }
 
 export function CatalogView({ properties }: CatalogViewProps) {
@@ -43,20 +57,39 @@ export function CatalogView({ properties }: CatalogViewProps) {
 
     if (loc) setSelectedLocation(loc);
     if (type) setSelectedPropertyType(type);
-    if (proj) setSelectedProject(proj);
+    if (proj) setSelectedProject(resolveProjectFilterValue(properties, proj));
     if (minP) setMinPrice(parseInt(minP));
     if (maxP) setMaxPrice(parseInt(maxP));
-  }, [searchParams]);
+  }, [properties, searchParams]);
 
   const locations = useMemo(() => makeOptions(properties.map((property) => property.location)), [properties]);
   const modes = useMemo(() => makeOptions(properties.map((property) => property.listingMode)), [properties]);
-  const projects = useMemo(() => makeOptions(properties.map((property) => property.project)), [properties]);
+  const projects = useMemo(
+    () =>
+      [
+        ...new Map(
+          properties
+            .filter((property) => property.project)
+            .map((property) => [
+              property.projectSlug ?? property.project,
+              {
+                value: property.projectSlug ?? property.project,
+                label: property.project,
+              },
+            ]),
+        ).values(),
+      ],
+    [properties],
+  );
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) => {
       if (selectedLocation && property.location !== selectedLocation) return false;
       if (selectedPropertyType && property.type !== selectedPropertyType) return false;
-      if (selectedProject && property.project !== selectedProject) return false;
+      if (selectedProject) {
+        const comparableProjectValue = property.projectSlug ?? property.project;
+        if (comparableProjectValue !== selectedProject) return false;
+      }
       if (selectedMode && property.listingMode !== selectedMode) return false;
       
       const price = property.priceAmount ?? 0;
@@ -239,7 +272,7 @@ export function CatalogView({ properties }: CatalogViewProps) {
                 label="Proyectos"
                 value={selectedProject || ""}
                 onChange={(val) => setSelectedProject(val || null)}
-                options={projects.map(p => ({ value: p, label: p }))}
+                options={projects}
                 placeholder="Todos los proyectos"
               />
             </section>
