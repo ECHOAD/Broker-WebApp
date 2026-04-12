@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { archiveProject, upsertProject } from "@/app/admin/actions";
+import { archiveProject, upsertProject } from "@/app/admin/projects/actions";
 import { PanelHeader } from "@/components/admin/admin-primitives";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormField } from "@/components/shared/form-field";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { ProjectLogoUploader } from "./project-logo-uploader";
 
 type ProjectListItem = {
   id: string;
@@ -38,6 +39,7 @@ type SelectedProject = {
   summary: string | null;
   description: string | null;
   isFeatured: boolean;
+  logoStoragePath: string | null;
 } | null;
 
 type ProjectEditorProps = {
@@ -148,6 +150,15 @@ export function ProjectEditor({
             <FormField label="Descripcion">
               <Textarea defaultValue={selectedProject?.description ?? ""} name="description" rows={6} />
             </FormField>
+
+            {selectedProject && (
+              <div className="py-4 border-y border-outline my-4">
+                <ProjectLogoUploader 
+                  projectId={selectedProject.id} 
+                  initialLogoPath={selectedProject.logoStoragePath} 
+                />
+              </div>
+            )}
 
             <label className="admin-editor-form__check">
               <input defaultChecked={selectedProject?.isFeatured ?? false} name="isFeatured" type="checkbox" />

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Skill(bencium-innovative-ux-designer)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}

@@ -4,6 +4,7 @@ import "@fontsource/plus-jakarta-sans/400.css";
 import "@fontsource/plus-jakarta-sans/500.css";
 import "@fontsource/plus-jakarta-sans/600.css";
 import type { Metadata } from "next";
+import { FloatingWhatsAppButton } from "@/components/floating-whatsapp-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,7 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="bg-background font-sans text-foreground antialiased">{children}</body>
+      <body className="bg-background font-sans text-foreground antialiased relative">
+        <div className="grain-overlay" aria-hidden="true" />
+        {children}
+        <FloatingWhatsAppButton />
+      </body>
     </html>
   );
 }

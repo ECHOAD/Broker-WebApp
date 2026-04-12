@@ -1,194 +1,120 @@
 import Link from "next/link";
 import { BrokerWavePortrait } from "@/components/broker-wave-portrait";
-import { PropertyCard } from "@/components/property-card";
+import { FeaturedOpportunitiesSlider } from "@/components/featured-opportunities-slider";
+import { HeroPropertyRotator } from "@/components/hero-property-rotator";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buildWhatsAppUrl } from "@/lib/contact";
 import { listPublicProperties } from "@/lib/properties";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
   const publicProperties = await listPublicProperties();
-  const featuredProperties = publicProperties.slice(0, 3);
-  const heroProperty = featuredProperties[0] ?? publicProperties[0] ?? null;
-  const projectCount = new Set(
-    publicProperties
-      .map((property) => property.project)
-      .filter((project) => project && project !== "Seleccion privada"),
-  ).size;
-  const availableCount = publicProperties.filter((property) => property.status === "Disponible").length;
-  const priceModes = [...new Set(publicProperties.map((property) => property.listingMode))].slice(0, 3);
-  const keyLocations = [...new Set(publicProperties.map((property) => property.location))].slice(0, 3);
+  const featuredProperties = publicProperties.slice(0, 4);
+  const heroProperties = featuredProperties.length > 0 ? featuredProperties : publicProperties.slice(0, 1);
+  const brokerConversationUrl = buildWhatsAppUrl(
+    "Hola Carlos, vengo desde la web y quiero conversar sobre una propiedad.",
+  );
 
   return (
     <>
       <SiteHeader />
-      <main>
-        <section className="section landing-home">
+      <main className="relative overflow-hidden pb-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[44rem] bg-[radial-gradient(circle_at_top_left,rgba(150,209,214,0.18),transparent_42%),radial-gradient(circle_at_78%_16%,rgba(73,35,6,0.08),transparent_30%)]" />
+
+        <section className="pt-6 pb-14">
           <div className="page-shell">
-            <div className="landing-stage">
-              <div className="landing-stage__copy">
-                <div className="landing-stage__header">
-                  <p className="eyebrow">Broker inmobiliario en Republica Dominicana</p>
-                  <h1 className="display-title landing-stage__title">
-                    Comprar bien empieza con alguien que filtra mejor.
+            <div className="grid gap-6 lg:grid-cols-[0.94fr_1.06fr]">
+              <div className="grid gap-6 self-center pt-4 lg:pr-10 animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <div className="grid gap-4">
+                  <div className="flex items-center gap-4">
+                    <span className="h-px w-14 bg-primary/30" />
+                    <p className="eyebrow m-0">Broker inmobiliario · Republica Dominicana</p>
+                  </div>
+
+                  <h1 className="m-0 max-w-[12ch] font-serif text-[clamp(2.7rem,6vw,5rem)] leading-[0.92] tracking-[-0.04em] text-balance text-primary">
+                    Explora mejor. Decide mas claro.
                   </h1>
-                  <p className="landing-stage__lede">
-                    Encuentra proyectos e inmuebles con una lectura mas clara de ubicacion,
-                    oportunidad y estilo de vida. Menos ruido. Mejor criterio. Mejor conversacion
-                    desde el primer contacto.
+
+                  <p className="m-0 max-w-[36rem] text-[1.05rem] leading-[1.9] text-muted text-balance opacity-80">
+                    Una entrada simple para ver propiedades con mejor criterio y hablar directo con el
+                    broker cuando una oportunidad ya tenga sentido.
                   </p>
                 </div>
 
-                <div className="chip-row">
-                  <Badge variant="outline">Compra</Badge>
-                  <Badge variant="outline">Renta</Badge>
-                  <Badge variant="outline">Inversion</Badge>
-                  <Badge variant="outline">Acompanamiento directo</Badge>
-                </div>
-
-                <div className="landing-stage__actions">
-                  <Button asChild size="lg">
-                    <Link href="/catalogo">Explorar catalogo</Link>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild size="lg" className="!text-white [&>a]:!text-white shadow-lg shadow-primary/10 rounded-full px-8">
+                    <Link href="/catalogo">Explorar catálogo</Link>
                   </Button>
-                  <Button asChild size="lg" variant="secondary">
-                    <Link href="#broker">Conocer al broker</Link>
+                  <Button asChild size="lg" variant="secondary" className="bg-white/60 backdrop-blur-sm rounded-full px-8">
+                    <a href="#broker">Conocer al broker</a>
                   </Button>
-                </div>
-
-                <div className="landing-search-panel">
-                  <div className="landing-search-panel__tabs">
-                    <span className="landing-search-panel__tab is-active">Comprar</span>
-                    <span className="landing-search-panel__tab">Alquilar</span>
-                  </div>
-
-                  <div className="landing-search-panel__grid">
-                    <div className="landing-search-chip landing-search-chip--wide">
-                      <span className="landing-search-chip__label">Zonas clave</span>
-                      <strong>
-                        {keyLocations.length > 0
-                          ? keyLocations.join(" | ")
-                          : "Cap Cana | Punta Cana | Las Terrenas"}
-                      </strong>
-                    </div>
-                    <div className="landing-search-chip">
-                      <span className="landing-search-chip__label">Proyectos</span>
-                      <strong>{projectCount} activos en foco</strong>
-                    </div>
-                    <div className="landing-search-chip">
-                      <span className="landing-search-chip__label">Disponibles</span>
-                      <strong>{availableCount} opciones hoy</strong>
-                    </div>
-                    <div className="landing-search-chip">
-                      <span className="landing-search-chip__label">Modo</span>
-                      <strong>{priceModes.join(" | ") || "Venta | Renta"}</strong>
-                    </div>
-                    <Button asChild className="landing-search-panel__button" size="lg">
-                      <Link href="/catalogo">Buscar propiedades</Link>
-                    </Button>
-                  </div>
                 </div>
               </div>
 
-              <div className="landing-stage__visual">
-                <div className="landing-stage__halo landing-stage__halo--one" />
-                <div className="landing-stage__halo landing-stage__halo--two" />
-                <BrokerWavePortrait className="landing-stage__portrait"  imageSrc={'./broker-photo.jpeg'}/>
-                <div className="landing-stage__floating-note">
-                  <p className="eyebrow">Selecciones con criterio</p>
-                  <strong>
-                    {heroProperty?.project ?? "Colecciones privadas"} con lectura editorial y mejor
-                    entrada comercial.
-                  </strong>
-                </div>
+              <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+                <HeroPropertyRotator properties={heroProperties} />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="section" id="broker">
-          <div className="page-shell broker-story-grid">
-            <div className="broker-story-card">
-              <p className="eyebrow">Sobre el broker</p>
-              <h2 className="section-title">Carlos Realto</h2>
-              <p className="muted">
-                Trabajo la busqueda inmobiliaria como una curaduria comercial. Antes de proponerte
-                una visita, ordeno el contexto del proyecto, la ubicacion y el valor real de cada
-                activo para que la decision se sienta mas clara y menos pesada.
-              </p>
-              <blockquote className="broker-story-card__quote">
-                "Mi trabajo no es mostrarte todo. Es mostrarte primero lo que de verdad merece tu
-                tiempo."
-              </blockquote>
-              <div className="chip-row">
-                <Badge variant="outline">Asesoria personal</Badge>
-                <Badge variant="outline">Comparacion guiada</Badge>
-                <Badge variant="outline">Negociacion</Badge>
-              </div>
-            </div>
-
-            <div className="broker-story-stack">
-              <div className="broker-proof-card">
-                <p className="eyebrow">Como acompano</p>
-                <ul>
-                  <li>Filtro proyectos y propiedades antes de recomendar una ruta de visita.</li>
-                  <li>Traduzco precio, potencial y encaje del activo en decisiones mas concretas.</li>
-                  <li>Mantengo el seguimiento comercial hasta que la oportunidad madura o se descarta bien.</li>
-                </ul>
-              </div>
-
-              <div className="broker-stats-card">
-                <div>
-                  <strong>{publicProperties.length}</strong>
-                  <span className="muted">Propiedades publicadas</span>
-                </div>
-                <div>
-                  <strong>{projectCount}</strong>
-                  <span className="muted">Proyectos representados</span>
-                </div>
-                <div>
-                  <strong>{availableCount}</strong>
-                  <span className="muted">Activos disponibles</span>
-                </div>
-                <div>
-                  <strong>{featuredProperties.length}</strong>
-                  <span className="muted">Destacadas hoy</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section">
+        <section className="py-20 bg-surface-soft/40">
           <div className="page-shell">
-            <div className="landing-section-heading">
-              <div>
-                <p className="eyebrow">Selecciones destacadas</p>
-                <h2 className="section-title">Proyectos e inmuebles para empezar con mas certeza.</h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-3">
+                <span className="h-px w-8 bg-primary/40" />
+                <p className="eyebrow m-0 text-primary">Seleccion</p>
               </div>
-              <p className="lede" style={{ maxWidth: "32rem", margin: 0 }}>
-                Un primer frente de propiedades que ya llegan con narrativa, contexto y una mejor
-                oportunidad de conversion a visita.
-              </p>
+              <h2 className="mt-4 mb-0 font-serif text-[clamp(2.2rem,4vw,3.5rem)] leading-none tracking-[-0.04em]">
+                Oportunidades con mejor lectura.
+              </h2>
             </div>
+            <FeaturedOpportunitiesSlider properties={featuredProperties} />
+          </div>
+        </section>
 
-            {featuredProperties.length === 0 ? (
-              <div className="copy-card">
-                <p className="eyebrow">Sin inventario destacado</p>
-                <p className="muted" style={{ margin: 0 }}>
-                  Cuando entren nuevos inmuebles, esta franja mostrara las oportunidades mas
-                  fuertes para abrir contacto.
-                </p>
+        <section className="py-28" id="broker">
+          <div className="page-shell">
+            <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-12 lg:gap-24 items-center">
+              <div className="relative group">
+                <div className="absolute -inset-6 bg-primary/5 rounded-[3rem] blur-3xl group-hover:bg-primary/10 transition-all duration-700" />
+                <div className="relative transition-transform duration-500 hover:scale-[1.01]">
+                   <BrokerWavePortrait className="w-full max-w-lg mx-auto" imageSrc="/broker-photo-2.jpg" />
+                </div>
               </div>
-            ) : (
-              <div className="property-grid">
-                {featuredProperties.map((property) => (
-                  <PropertyCard key={property.slug} property={property} />
-                ))}
+
+              <div className="grid gap-8">
+                <div className="grid gap-5">
+                  <div className="flex items-center gap-3">
+                    <span className="h-px w-8 bg-primary/40" />
+                    <p className="eyebrow m-0 text-primary">El Broker</p>
+                  </div>
+                  <h2 className="m-0 font-serif text-[clamp(2.5rem,5vw,4.5rem)] leading-[0.9] tracking-[-0.05em] text-balance">
+                    Carlos Morla. Directo y con criterio.
+                  </h2>
+                  <p className="m-0 max-w-[34rem] text-lg leading-relaxed text-muted text-balance lg:text-lg">
+                    Mi enfoque no es convencerte de todo, sino ayudarte a reconocer rápido cuando una
+                    propiedad ya merece una visita, una negociación o tu seguimiento. Sin vueltas innecesarias.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-4 pt-2">
+                  {brokerConversationUrl && (
+                    <Button asChild size="lg" className="!text-white [&>a]:!text-white shadow-xl shadow-primary/20">
+                      <a href={brokerConversationUrl} target="_blank" rel="noopener noreferrer">
+                        Hablemos por WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                  <Button asChild size="lg" variant="secondary" className="bg-white/80 backdrop-blur-sm">
+                    <Link href="/catalogo">Explorar catálogo completo</Link>
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </section>
       </main>

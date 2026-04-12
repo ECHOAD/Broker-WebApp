@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { updateLeadStatus } from "@/app/admin/actions";
+import { updateLeadStatus } from "@/app/admin/leads/actions";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormField } from "@/components/shared/form-field";
 import { Badge } from "@/components/ui/badge";

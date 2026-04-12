@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { hideProperty, upsertProperty } from "@/app/admin/actions";
+import { hideProperty, upsertProperty } from "@/app/admin/properties/actions";
 import { PanelHeader } from "@/components/admin/admin-primitives";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormField } from "@/components/shared/form-field";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUploader } from "./image-uploader";
 
 type PropertyListItem = {
   id: string;
@@ -24,6 +25,12 @@ type PropertyListItem = {
 type Option = {
   value: string;
   label: string;
+};
+
+type PropertyMedia = {
+  id: string;
+  storage_path: string;
+  is_cover: boolean;
 };
 
 type SelectedProperty = {
@@ -48,6 +55,7 @@ type SelectedProperty = {
   description: string | null;
   isFeatured: boolean;
   publishedAt: string | null;
+  media?: PropertyMedia[];
 } | null;
 
 type PropertyEditorProps = {
@@ -230,6 +238,15 @@ export function PropertyEditor({
             <FormField label="Descripcion">
               <Textarea defaultValue={selectedProperty?.description ?? ""} name="description" rows={6} />
             </FormField>
+
+            {selectedProperty && (
+              <div className="py-4 border-y border-outline my-4">
+                <ImageUploader 
+                  propertyId={selectedProperty.id} 
+                  initialMedia={selectedProperty.media ?? []} 
+                />
+              </div>
+            )}
 
             <label className="admin-editor-form__check">
               <input defaultChecked={selectedProperty?.isFeatured ?? false} name="isFeatured" type="checkbox" />
