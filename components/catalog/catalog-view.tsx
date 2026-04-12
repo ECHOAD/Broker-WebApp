@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageIntro } from "@/components/shared/page-intro";
 import { PropertyCard } from "@/components/property-card";
+import { MoneyInput } from "@/components/ui/money-input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { PropertyCardData } from "@/lib/properties";
 
 type CatalogViewProps = {
@@ -17,23 +20,49 @@ function makeOptions(values: string[]) {
 }
 
 export function CatalogView({ properties }: CatalogViewProps) {
+  const searchParams = useSearchParams();
+  
+  const defaultMinPrice = 0;
+  const defaultMaxPrice = 20000000;
+
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
-  const [minPrice, setMinPrice] = useState(500000);
-  const [maxPrice, setMaxPrice] = useState(15000000);
+  const [minPrice, setMinPrice] = useState(defaultMinPrice);
+  const [maxPrice, setMaxPrice] = useState(defaultMaxPrice);
   const [bedrooms, setBedrooms] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<string | null>(null);
   const [selectedPropertyType, setSelectedPropertyType] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loc = searchParams.get("location");
+    const type = searchParams.get("type");
+    const proj = searchParams.get("project");
+    const minP = searchParams.get("minPrice");
+    const maxP = searchParams.get("maxPrice");
+
+    if (loc) setSelectedLocation(loc);
+    if (type) setSelectedPropertyType(type);
+    if (proj) setSelectedProject(proj);
+    if (minP) setMinPrice(parseInt(minP));
+    if (maxP) setMaxPrice(parseInt(maxP));
+  }, [searchParams]);
 
   const locations = useMemo(() => makeOptions(properties.map((property) => property.location)), [properties]);
   const modes = useMemo(() => makeOptions(properties.map((property) => property.listingMode)), [properties]);
+  const projects = useMemo(() => makeOptions(properties.map((property) => property.project)), [properties]);
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) => {
       if (selectedLocation && property.location !== selectedLocation) return false;
       if (selectedPropertyType && property.type !== selectedPropertyType) return false;
+      if (selectedProject && property.project !== selectedProject) return false;
       if (selectedMode && property.listingMode !== selectedMode) return false;
-      if (property.priceAmount !== null && (property.priceAmount < minPrice || property.priceAmount > maxPrice)) return false;
+      
+      const price = property.priceAmount ?? 0;
+      if (property.priceAmount !== null) {
+        if (price < minPrice || price > maxPrice) return false;
+      }
       
       if (bedrooms && bedrooms !== "Todos") {
         if (bedrooms === "5+") {
@@ -55,9 +84,9 @@ export function CatalogView({ properties }: CatalogViewProps) {
       
       return true;
     });
-  }, [properties, selectedLocation, selectedMode, minPrice, maxPrice, bedrooms, bathrooms, selectedPropertyType]);
+  }, [properties, selectedLocation, selectedMode, minPrice, maxPrice, bedrooms, bathrooms, selectedPropertyType, selectedProject]);
 
-  const activeFilterCount = [selectedLocation, selectedMode, bedrooms, bathrooms, selectedPropertyType].filter(Boolean).length + (minPrice !== 500000 || maxPrice !== 15000000 ? 1 : 0);
+  const activeFilterCount = [selectedLocation, selectedMode, bedrooms, bathrooms, selectedPropertyType, selectedProject].filter(Boolean).length + (minPrice !== defaultMinPrice || maxPrice !== defaultMaxPrice ? 1 : 0);
 
   const formatInputValue = (value: number) => {
     return value.toLocaleString("en-US");
@@ -68,6 +97,17 @@ export function CatalogView({ properties }: CatalogViewProps) {
     setter(numericValue);
   };
 
+  const resetFilters = () => {
+    setSelectedLocation(null);
+    setSelectedMode(null);
+    setMinPrice(defaultMinPrice);
+    setMaxPrice(defaultMaxPrice);
+    setBedrooms(null);
+    setBathrooms(null);
+    setSelectedPropertyType(null);
+    setSelectedProject(null);
+  };
+
   return (
     <div className="catalog-page-grid">
       <aside className="catalog-sidebar sticky top-[7.5rem] self-start h-fit">
@@ -76,15 +116,7 @@ export function CatalogView({ properties }: CatalogViewProps) {
             <p className="eyebrow m-0 opacity-50 text-[9px]">Refinar selección</p>
             {activeFilterCount > 0 && (
               <button 
-                onClick={() => {
-                  setSelectedLocation(null);
-                  setSelectedMode(null);
-                  setMinPrice(500000);
-                  setMaxPrice(15000000);
-                  setBedrooms(null);
-                  setBathrooms(null);
-                  setSelectedPropertyType(null);
-                }}
+                onClick={resetFilters}
                 className="eyebrow m-0 text-primary border-b border-primary/20 pb-0.5 hover:border-primary transition-all lowercase italic text-[9px]"
               >
                 Limpiar todo
@@ -93,36 +125,19 @@ export function CatalogView({ properties }: CatalogViewProps) {
           </div>
 
           {/* Budget Range */}
-          <section className="mb-8">
+          <section className="mb-8 px-1">
             <h2 className="font-serif text-[1.3rem] tracking-tight text-primary mb-6">Presupuesto</h2>
-            <div className="grid gap-4 px-1">
-              <div className="grid gap-2">
-                <label className="eyebrow m-0 opacity-40 text-[8px] tracking-[0.2em]">Mínimo (USD)</label>
-                <div className="relative group">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/30 font-serif text-sm group-focus-within:text-primary transition-colors">$</span>
-                  <input 
-                    type="text" 
-                    inputMode="numeric"
-                    value={formatInputValue(minPrice)}
-                    onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
-                    className="w-full pl-7 pr-3 py-2.5 bg-surface border border-outline/20 rounded-xl font-serif text-[0.95rem] text-primary focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/5 transition-all"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid gap-2">
-                <label className="eyebrow m-0 opacity-40 text-[8px] tracking-[0.2em]">Máximo (USD)</label>
-                <div className="relative group">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/30 font-serif text-sm group-focus-within:text-primary transition-colors">$</span>
-                  <input 
-                    type="text" 
-                    inputMode="numeric"
-                    value={formatInputValue(maxPrice)}
-                    onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
-                    className="w-full pl-7 pr-3 py-2.5 bg-surface border border-outline/20 rounded-xl font-serif text-[0.95rem] text-primary focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/5 transition-all"
-                  />
-                </div>
-              </div>
+            <div className="grid gap-4">
+              <MoneyInput 
+                label="Mínimo (USD)"
+                value={minPrice}
+                onChange={setMinPrice}
+              />
+              <MoneyInput 
+                label="Máximo (USD)"
+                value={maxPrice}
+                onChange={setMaxPrice}
+              />
             </div>
           </section>
 
@@ -217,19 +232,35 @@ export function CatalogView({ properties }: CatalogViewProps) {
             </div>
           </section>
 
+          {/* Projects */}
+          {projects.length > 0 && (
+            <section className="mb-8">
+              <SearchableSelect
+                label="Proyectos"
+                value={selectedProject || ""}
+                onChange={(val) => setSelectedProject(val || null)}
+                options={projects.map(p => ({ value: p, label: p }))}
+                placeholder="Todos los proyectos"
+              />
+            </section>
+          )}
+
+          {/* Location */}
+          <section className="mb-8">
+            <SearchableSelect
+              label="Ubicación"
+              value={selectedLocation || ""}
+              onChange={(val) => setSelectedLocation(val || null)}
+              options={locations.map(l => ({ value: l, label: l }))}
+              placeholder="Todas las zonas"
+            />
+          </section>
+
           <div className="pt-6 border-t border-outline/20">
             <div className="flex items-center justify-between">
               <span className="eyebrow m-0 opacity-40 text-[8px]">{filteredProperties.length} Resultados</span>
               <button 
-                onClick={() => {
-                  setSelectedLocation(null);
-                  setSelectedMode(null);
-                  setMinPrice(500000);
-                  setMaxPrice(15000000);
-                  setBedrooms(null);
-                  setBathrooms(null);
-                  setSelectedPropertyType(null);
-                }}
+                onClick={resetFilters}
                 className="eyebrow m-0 text-primary hover:opacity-70 transition-opacity lowercase italic text-[8px] border-b border-transparent hover:border-primary/30"
               >
                 Resetear

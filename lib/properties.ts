@@ -391,3 +391,101 @@ export async function listPublicPropertiesByIds(propertyIds: string[]) {
     .map((propertyId) => propertyById.get(propertyId))
     .filter((property): property is PropertyDetailData => Boolean(property));
 }
+
+export async function listPublicProjects() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id, name, slug")
+    .eq("status", "published")
+    .order("name");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listPublicPropertyTypes() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("property_types")
+    .select("id, label_es, slug, is_active, sort_order")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+export type ProjectDetailData = {
+  id: string;
+  name: string;
+  slug: string;
+  headline: string | null;
+  summary: string | null;
+  description: string | null;
+  location: string | null;
+  mainImageUrl: string | null;
+  logoUrl: string | null;
+  propertyCount: number;
+};
+
+const PROJECT_SELECT = `
+  id,
+  name,
+  slug,
+  headline,
+  summary,
+  description,
+  approximate_location_text,
+  main_image_storage_path,
+  logo_storage_path,
+  properties:properties(id)
+`;
+
+async function mapPublicProject(project: any): Promise<ProjectDetailData> {
+  const supabase = createPublicClient();
+
+  const { data: mainImageData } = project.main_image_storage_path
+    ? supabase.storage.from("property-media").getPublicUrl(project.main_image_storage_path)
+    : { data: { publicUrl: null } };
+
+  const { data: logoData } = project.logo_storage_path
+    ? supabase.storage.from("property-media").getPublicUrl(project.logo_storage_path)
+    : { data: { publicUrl: null } };
+
+  return {
+    id: project.id,
+    name: project.name,
+    slug: project.slug,
+    headline: project.headline,
+    summary: project.summary,
+    description: project.description,
+    location: project.approximate_location_text,
+    mainImageUrl: mainImageData.publicUrl,
+    logoUrl: logoData.publicUrl,
+    propertyCount: project.properties?.length ?? 0,
+  };
+}
+
+export async function getFeaturedPublicProjects(limit = 3) {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select(PROJECT_SELECT)
+    .eq("status", "published")
+    .eq("is_featured", true)
+    .order("sort_order", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return Promise.all((data ?? []).map(mapPublicProject));
+}
+

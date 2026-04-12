@@ -14,14 +14,14 @@ type PriceMode = PropertyRow["price_mode"];
 // ============================================================================
 
 export const STATUS_LABELS: Record<LeadStatus, string> = {
-  new: "Nuevo",
-  contacted: "Contactado",
-  qualified: "Calificado",
-  meeting_requested: "Cita solicitada",
-  meeting_scheduled: "Cita agendada",
-  negotiation: "Negociacion",
-  closed_won: "Cierre ganado",
-  closed_lost: "Cierre perdido",
+  new: "Recibido",
+  contacted: "En contacto",
+  qualified: "Interesado",
+  meeting_requested: "Cita pedida",
+  meeting_scheduled: "Cita fijada",
+  negotiation: "Negociación",
+  closed_won: "Vendido / Ganado",
+  closed_lost: "No interesado",
   archived: "Archivado",
 };
 
@@ -168,14 +168,30 @@ export function computePipelineCounts(leads: Array<{ current_status: LeadStatus 
   }));
 }
 
+export async function listLocations() {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("locations")
+    .select("id, name, slug")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
 export function computeSnapshot(
   leads: Array<{ current_status: LeadStatus }>,
   properties: Array<{ commercial_status: PropertyStatus }>,
   projects: Array<{ status: ProjectStatus }>,
 ) {
   return [
-    { label: "Leads totales", value: String(leads.length) },
-    { label: "Pendientes de respuesta", value: String(leads.filter((lead) => lead.current_status === "new").length) },
+    { label: "Contactos totales", value: String(leads.length) },
+    { label: "Por responder", value: String(leads.filter((lead) => lead.current_status === "new").length) },
     {
       label: "Propiedades activas",
       value: String(properties.filter((property) => ["available", "reserved"].includes(property.commercial_status)).length),

@@ -75,6 +75,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      locations: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       leads: {
         Row: {
           consent_captured_at: string | null;
@@ -137,22 +167,34 @@ export type Database = {
       };
       profiles: {
         Row: {
+          avatar_url: string | null;
+          created_at: string;
           email: string | null;
           full_name: string | null;
           id: string;
+          preferred_language: Database["public"]["Enums"]["language_code"];
           role: Database["public"]["Enums"]["app_role"];
+          updated_at: string;
         };
         Insert: {
+          avatar_url?: string | null;
+          created_at?: string;
           email?: string | null;
           full_name?: string | null;
           id: string;
+          preferred_language?: Database["public"]["Enums"]["language_code"];
           role?: Database["public"]["Enums"]["app_role"];
+          updated_at?: string;
         };
         Update: {
+          avatar_url?: string | null;
+          created_at?: string;
           email?: string | null;
           full_name?: string | null;
           id?: string;
+          preferred_language?: Database["public"]["Enums"]["language_code"];
           role?: Database["public"]["Enums"]["app_role"];
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -171,11 +213,17 @@ export type Database = {
           sort_order: number;
           status: Database["public"]["Enums"]["project_status"];
           summary: string | null;
+          updated_at: string;
           updated_by: string | null;
           whatsapp_phone: string | null;
+          logo_storage_path: string | null;
+          main_image_storage_path: string | null;
+          location_id: string | null;
         };
         Insert: {
+          approximate_latitude?: number | null;
           approximate_location_text?: string | null;
+          approximate_longitude?: number | null;
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
@@ -188,11 +236,17 @@ export type Database = {
           sort_order?: number;
           status?: Database["public"]["Enums"]["project_status"];
           summary?: string | null;
+          updated_at?: string;
           updated_by?: string | null;
           whatsapp_phone?: string | null;
+          logo_storage_path?: string | null;
+          main_image_storage_path?: string | null;
+          location_id?: string | null;
         };
         Update: {
+          approximate_latitude?: number | null;
           approximate_location_text?: string | null;
+          approximate_longitude?: number | null;
           created_at?: string;
           created_by?: string | null;
           description?: string | null;
@@ -205,10 +259,21 @@ export type Database = {
           sort_order?: number;
           status?: Database["public"]["Enums"]["project_status"];
           summary?: string | null;
+          updated_at?: string;
           updated_by?: string | null;
           whatsapp_phone?: string | null;
+          logo_storage_path?: string | null;
+          main_image_storage_path?: string | null;
+          location_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "projects_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       properties: {
         Row: {
@@ -236,6 +301,7 @@ export type Database = {
           title: string;
           updated_by: string | null;
           whatsapp_phone: string | null;
+          location_id: string | null;
         };
         Insert: {
           approximate_location_text?: string | null;
@@ -262,6 +328,7 @@ export type Database = {
           title: string;
           updated_by?: string | null;
           whatsapp_phone?: string | null;
+          location_id?: string | null;
         };
         Update: {
           approximate_location_text?: string | null;
@@ -288,60 +355,101 @@ export type Database = {
           title?: string;
           updated_by?: string | null;
           whatsapp_phone?: string | null;
+          location_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "properties_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "properties_project_id_fkey";
+            columns: ["project_id"];
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "properties_property_type_id_fkey";
+            columns: ["property_type_id"];
+            referencedRelation: "property_types";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       property_media: {
         Row: {
           alt_text: string | null;
           caption: string | null;
+          created_at: string;
+          height: number | null;
           id: string;
           is_cover: boolean;
           property_id: string;
           sort_order: number;
           storage_bucket: string;
           storage_path: string;
+          width: number | null;
         };
         Insert: {
           alt_text?: string | null;
           caption?: string | null;
+          created_at?: string;
+          height?: number | null;
           id?: string;
           is_cover?: boolean;
           property_id: string;
           sort_order?: number;
           storage_bucket?: string;
           storage_path: string;
+          width?: number | null;
         };
         Update: {
           alt_text?: string | null;
           caption?: string | null;
+          created_at?: string;
+          height?: number | null;
           id?: string;
           is_cover?: boolean;
           property_id?: string;
           sort_order?: number;
           storage_bucket?: string;
           storage_path?: string;
+          width?: number | null;
         };
         Relationships: [];
       };
       property_types: {
         Row: {
+          created_at: string;
           id: string;
+          is_active: boolean;
           label_en: string;
           label_es: string;
           slug: string;
+          sort_order: number;
+          updated_at: string;
         };
         Insert: {
+          created_at?: string;
           id?: string;
+          is_active?: boolean;
           label_en: string;
           label_es: string;
           slug: string;
+          sort_order?: number;
+          updated_at?: string;
         };
         Update: {
+          created_at?: string;
           id?: string;
+          is_active?: boolean;
           label_en?: string;
           label_es?: string;
           slug?: string;
+          sort_order?: number;
+          updated_at?: string;
         };
         Relationships: [];
       };

@@ -5,6 +5,8 @@ import { uploadProjectLogo, deleteProjectLogo } from "@/app/admin/projects/actio
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { UploadCloud, Trash2, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type ProjectLogoUploaderProps = {
   projectId: string;
@@ -56,51 +58,56 @@ export function ProjectLogoUploader({ projectId, initialLogoPath }: ProjectLogoU
     : { data: { publicUrl: null } };
 
   return (
-    <div className="grid gap-4">
-      <p className="eyebrow">Logo del proyecto</p>
-      
-      <div className="flex items-start gap-6">
-        <Card className="relative w-32 h-32 overflow-hidden flex items-center justify-center bg-surface-soft border-2 border-dashed border-outline/20">
-          {publicData.publicUrl ? (
-            <img
-              src={publicData.publicUrl}
-              alt="Project Logo"
-              className="w-full h-full object-contain p-2"
-            />
-          ) : (
-            <span className="text-[10px] text-muted uppercase tracking-widest text-center px-2">
-              Sin logo
-            </span>
-          )}
-        </Card>
+    <div className="flex flex-col sm:flex-row items-center gap-6">
+      {/* Logo Preview */}
+      <Card className={cn(
+        "relative w-28 h-28 overflow-hidden flex items-center justify-center transition-all shrink-0",
+        initialLogoPath ? "bg-slate-900 border-none shadow-md" : "bg-slate-50 border-2 border-dashed border-slate-200"
+      )}>
+        {publicData.publicUrl ? (
+          <img
+            src={publicData.publicUrl}
+            alt="Project Logo"
+            className="w-full h-full object-contain p-4 filter brightness-0 invert"
+          />
+        ) : (
+          <ShieldCheck className="w-8 h-8 text-slate-200" />
+        )}
+      </Card>
 
-        <div className="grid gap-2">
-          <div className="relative">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              disabled={isUploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-wait"
-            />
-            <Button variant="secondary" size="sm" disabled={isUploading}>
-              {isUploading ? "Subiendo..." : "Cambiar logo"}
-            </Button>
-          </div>
-          {initialLogoPath && (
-            <Button 
-              variant="tertiary" 
-              size="sm" 
-              onClick={handleDelete}
-              className="text-red-600 hover:text-red-700"
-            >
-              Eliminar logo
-            </Button>
-          )}
-          <p className="text-[10px] text-muted max-w-[200px]">
-            Se recomienda una imagen PNG con fondo transparente.
-          </p>
+      {/* Actions */}
+      <div className="flex flex-col gap-3 flex-1 w-full sm:w-auto">
+        <div className="relative">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={isUploading}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-wait z-10"
+          />
+          <Button 
+            type="button"
+            className="w-full sm:w-auto h-10 bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-wider px-6 shadow-sm"
+            disabled={isUploading}
+          >
+            {isUploading ? "Subiendo..." : initialLogoPath ? "Cambiar Logo" : "Subir Logo Comercial"}
+          </Button>
         </div>
+        
+        {initialLogoPath && (
+          <button 
+            type="button"
+            onClick={handleDelete}
+            className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors flex items-center gap-1.5 px-1"
+          >
+            <Trash2 className="w-3 h-3" />
+            Eliminar logo actual
+          </button>
+        )}
+        
+        <p className="text-[9px] text-slate-400 leading-relaxed font-medium max-w-[220px]">
+          Se recomienda una imagen en formato **PNG con fondo transparente**.
+        </p>
       </div>
     </div>
   );

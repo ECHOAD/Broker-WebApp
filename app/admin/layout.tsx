@@ -1,65 +1,19 @@
-import { SitePage } from "@/components/layout/site-page";
-import { AdminHero, PipelinePanel } from "@/components/admin/admin-primitives";
-import { AdminNav } from "@/components/admin/admin-nav";
 import { requireBrokerAdmin } from "@/lib/auth";
-import { computePipelineCounts, computeSnapshot } from "@/lib/admin";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export const dynamic = "force-dynamic";
 
-type AdminLayoutProps = {
-  children: React.ReactNode;
-};
-
-export default async function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, profile, supabase } = await requireBrokerAdmin();
-
-  // Fetch datos para sidebar y hero
-  const [
-    { data: leadsData },
-    { data: projectsData },
-    { data: propertiesData },
-  ] = await Promise.all([
-    supabase
-      .from("leads")
-      .select("id, current_status")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("projects")
-      .select("id, status")
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("properties")
-      .select("id, commercial_status")
-      .order("created_at", { ascending: false }),
-  ]);
-
-  const leads = leadsData ?? [];
-  const projects = projectsData ?? [];
-  const properties = propertiesData ?? [];
-
-  const pipeline = computePipelineCounts(leads);
-  const snapshot = computeSnapshot(leads, properties, projects);
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireBrokerAdmin();
 
   return (
-    <SitePage>
-      <AdminHero
-        currentProfileLabel={profile.full_name ?? profile.email ?? "broker_admin"}
-        snapshot={snapshot}
-      />
-
-      <section className="section">
-        <div className="admin-layout-wrapper">
-          <aside className="admin-sidebar">
-            <AdminNav />
-
-            <div className="admin-sidebar-stats mt-8">
-              <PipelinePanel pipeline={pipeline} />
-            </div>
-          </aside>
-
-          <main className="admin-main-content">{children}</main>
+    <div className="min-h-screen bg-[#F5F5F7] font-sans flex text-slate-900 selection:bg-slate-900 selection:text-white">
+      <AdminSidebar />
+      <main className="flex-1 ml-[280px] p-10 md:p-14 overflow-y-auto">
+        <div className="max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {children}
         </div>
-      </section>
-    </SitePage>
+      </main>
+    </div>
   );
 }

@@ -2,17 +2,25 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle, MessageCircle } from "lucide-react";
 import { BrokerWavePortrait } from "@/components/broker-wave-portrait";
 import { PropertyCard } from "@/components/property-card";
+import { ProjectCard } from "@/components/project-card";
+import { PropertySearch } from "@/components/property-search";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppUrl } from "@/lib/contact";
-import { getFeaturedPublicProperties } from "@/lib/properties";
+import { getFeaturedPublicProperties, listPublicProjects, listPublicPropertyTypes, listPublicProperties, getFeaturedPublicProjects } from "@/lib/properties";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
   const featuredProperties = await getFeaturedPublicProperties(3);
+  const featuredProjects = await getFeaturedPublicProjects(3);
+  const projects = await listPublicProjects();
+  const propertyTypes = await listPublicPropertyTypes();
+  const allProperties = await listPublicProperties();
+  const locations = Array.from(new Set(allProperties.map(p => p.location))).filter(Boolean).sort();
+
   const brokerWhatsApp = buildWhatsAppUrl(
     "Hola Carlos, me interesa conversar sobre propiedades premium en República Dominicana.",
   );
@@ -48,11 +56,11 @@ export default async function HomePage() {
                 <div className="grid gap-6">
                   <div className="inline-flex items-center gap-3">
                     <span className="h-px w-12 bg-primary/30" />
-                    <p className="eyebrow m-0 text-primary">Broker Inmobiliario Premium</p>
+                    <p className="eyebrow m-0 text-primary">Broker Inmobiliario</p>
                   </div>
 
                   <h1 className="m-0 font-serif text-[clamp(2.6rem,5.5vw,4.8rem)] leading-[0.92] tracking-[-0.05em] text-balance max-w-[16ch]">
-                    Tu broker personal para inversiones premium
+                    Tu broker personal para inversiones
                   </h1>
 
                   <p className="m-0 text-muted text-[1.1rem] leading-[1.85] max-w-[36rem] text-balance">
@@ -136,8 +144,19 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* SEARCH SECTION - Floating over background */}
+        <section className="relative z-20 pb-16">
+          <div className="page-shell">
+            <PropertySearch
+              projects={projects}
+              propertyTypes={propertyTypes}
+              locations={locations}
+            />
+          </div>
+        </section>
+
         {/* FEATURED PROPERTIES SECTION */}
-        <section className="py-20 lg:py-28 bg-[#fbf9f4]">
+        <section className="pt-8 pb-20 lg:pb-28 bg-[#fbf9f4]">
           <div className="page-shell">
             {/* Section Header */}
             <div className="mb-12 lg:mb-16 text-center max-w-3xl mx-auto">
@@ -194,6 +213,46 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+
+        {/* FEATURED PROJECTS SECTION */}
+        {featuredProjects.length > 0 && (
+          <section className="py-20 lg:py-28 bg-white">
+            <div className="page-shell">
+              <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="max-w-2xl">
+                  <div className="inline-flex items-center gap-3 mb-4">
+                    <span className="h-px w-8 bg-primary/30" />
+                    <p className="eyebrow m-0 text-primary">Nuevos Desarrollos</p>
+                  </div>
+                  <h2 className="m-0 font-serif text-[clamp(2.5rem,5vw,4rem)] leading-[0.95] tracking-[-0.04em] mb-4">
+                    Proyectos en preventa y construcción
+                  </h2>
+                  <p className="text-lg text-muted leading-relaxed">
+                    Explora los proyectos inmobiliarios más ambiciosos de la zona, seleccionados por su ubicación estratégica y calidad arquitectónica.
+                  </p>
+                </div>
+                <Button asChild variant="tertiary" size="lg" className="group">
+                  <Link href="/catalogo" className="inline-flex items-center gap-2">
+                    Ver todos los proyectos
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+                {featuredProjects.map((project) => (
+                  <div 
+                    key={project.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${150 * featuredProjects.indexOf(project)}ms` }}
+                  >
+                    <ProjectCard project={project} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* WHY CARLOS SECTION */}
         <section className="py-20 lg:py-28 bg-surface-soft/40">

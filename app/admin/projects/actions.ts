@@ -24,7 +24,7 @@ export async function upsertProject(formData: FormData) {
   const sortOrder = toNullableInteger(formData.get("sortOrder")) ?? 0;
 
   if (!name || !ALLOWED_PROJECT_STATUSES.includes(status)) {
-    redirect(`/admin/projects${projectId ? `?project=${projectId}` : ""}`);
+    redirect(`/admin/projects${projectId ? `/${projectId}` : ""}`);
   }
 
   const slug = slugify(slugInput || name);
@@ -55,7 +55,7 @@ export async function upsertProject(formData: FormData) {
   }
 
   revalidatePath("/admin/projects");
-  redirect(`/admin/projects?project=${data.id}`);
+  redirect(`/admin/projects/${data.id}`);
 }
 
 export async function archiveProject(formData: FormData) {
@@ -140,6 +140,71 @@ export async function deleteProjectLogo(formData: FormData) {
     .from("projects")
     .update({
       logo_storage_path: null,
+      updated_by: user.id,
+    })
+    .eq("id", projectId);
+
+  revalidatePath("/admin/projects");
+  return { success: true };
+}
+
+export async function uploadProjectMainImage(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "").trim();
+  const file = formData.get("file") as File;
+
+  if (!projectId || !file || file.size === 0) {
+    return { error: "Datos de archivo invalidos." };
+  }
+
+  const { supabase, user } = await requireBrokerAdmin();
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `covers/${projectId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `projects/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage.from("property-media").upload(filePath, file);
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  const { error: dbError } = await supabase
+    .from("projects")
+    .update({
+      main_image_storage_path: filePath,
+      updated_by: user.id,
+    })
+    .eq("id", projectId);
+
+  if (dbError) {
+    await supabase.storage.from("property-media").remove([filePath]);
+    throw new Error(dbError.message);
+  }
+
+  revalidatePath("/admin/projects");
+  return { success: true };
+}
+
+export async function deleteProjectMainImage(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "").trim();
+  const storagePath = String(formData.get("storagePath") ?? "").trim();
+
+  if (!projectId || !storagePath) {
+    return { error: "Datos invalidos." };
+  }
+
+  const { supabase, user } = await requireBrokerAdmin();
+
+  const { error: storageError } = await supabase.storage.from("property-media").remove([storagePath]);
+
+  if (storageError) {
+    throw new Error(storageError.message);
+  }
+
+  const { error: dbError } = await supabase
+    .from("projects")
+    .update({
+      main_image_storage_path: null,
       updated_by: user.id,
     })
     .eq("id", projectId);
