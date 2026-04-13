@@ -429,9 +429,11 @@ export type ProjectDetailData = {
   summary: string | null;
   description: string | null;
   location: string | null;
+  whatsappPhone: string | null;
   mainImageUrl: string | null;
   logoUrl: string | null;
   propertyCount: number;
+  isFeatured: boolean;
 };
 
 const PROJECT_SELECT = `
@@ -441,6 +443,8 @@ const PROJECT_SELECT = `
   headline,
   summary,
   description,
+  whatsapp_phone,
+  is_featured,
   approximate_location_text,
   main_image_storage_path,
   logo_storage_path,
@@ -466,10 +470,28 @@ async function mapPublicProject(project: any): Promise<ProjectDetailData> {
     summary: project.summary,
     description: project.description,
     location: project.approximate_location_text,
+    whatsappPhone: project.whatsapp_phone,
     mainImageUrl: mainImageData.publicUrl,
     logoUrl: logoData.publicUrl,
     propertyCount: project.properties?.length ?? 0,
+    isFeatured: project.is_featured ?? false,
   };
+}
+
+export async function listPublicProjectsDetailed() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select(PROJECT_SELECT)
+    .eq("status", "published")
+    .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return Promise.all((data ?? []).map(mapPublicProject));
 }
 
 export async function getFeaturedPublicProjects(limit = 3) {
@@ -487,6 +509,33 @@ export async function getFeaturedPublicProjects(limit = 3) {
   }
 
   return Promise.all((data ?? []).map(mapPublicProject));
+}
+
+export async function getPublicProjectBySlug(slug: string) {
+  const normalizedSlug = slug.trim();
+
+  if (!normalizedSlug) {
+    return null;
+  }
+
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select(PROJECT_SELECT)
+    .eq("status", "published")
+    .eq("slug", normalizedSlug)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapPublicProject(data);
 }
 
 export async function getPublicProjectBySlugOrName(projectQuery: string) {
@@ -531,5 +580,38 @@ export async function getPublicProjectBySlugOrName(projectQuery: string) {
   }
 
   return mapPublicProject(projectByName);
+}
+
+export async function getPublicProjectSlugs() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("slug")
+    .eq("status", "published")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as Array<Pick<ProjectRow, "slug">>).map((project) => project.slug);
+}
+
+export async function listPublicPropertiesByProjectId(projectId: string) {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select(PROPERTY_SELECT)
+    .eq("project_id", projectId)
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const properties: PropertyRow[] = (data ?? []) as PropertyRow[];
+  return mapPublicProperties(properties);
 }
 

@@ -6,9 +6,19 @@ import { PropertyCardData } from "@/lib/properties";
 
 type PropertyCardProps = {
   property: PropertyCardData;
+  navigationMode?: "direct" | "project";
 };
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, navigationMode = "direct" }: PropertyCardProps) {
+  const shouldRouteThroughProject = navigationMode === "project" && property.projectSlug;
+  const primaryHref = shouldRouteThroughProject
+    ? `/proyectos/${property.projectSlug}`
+    : `/propiedades/${property.slug}`;
+  const primaryLabel = shouldRouteThroughProject ? "Ver proyecto" : "Ver propiedad";
+  const supportCopy = shouldRouteThroughProject
+    ? "Accede a esta propiedad entrando primero al proyecto."
+    : "Detalle completo de la propiedad.";
+
   return (
     <article className="property-card">
       <div className="property-card__visual">
@@ -29,6 +39,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         <p className="muted">{property.pitch}</p>
+
+        <p className="eyebrow m-0 opacity-50 normal-case tracking-[0.06em]">{supportCopy}</p>
 
         <div className="meta-row">
           <Badge variant="metric">{property.type}</Badge>
@@ -53,7 +65,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           <div className="property-card__actions">
             <FavoriteToggle propertyId={property.id} />
             <Button asChild>
-              <Link href={`/propiedades/${property.slug}`}>Ver propiedad</Link>
+              <Link href={primaryHref}>{primaryLabel}</Link>
             </Button>
           </div>
         </div>

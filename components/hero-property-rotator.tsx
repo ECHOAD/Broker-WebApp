@@ -44,6 +44,10 @@ export function HeroPropertyRotator({ properties }: HeroPropertyRotatorProps) {
   }
 
   const activeProperty = properties[activeIndex];
+  const activePropertyHref = activeProperty.projectSlug
+    ? `/proyectos/${activeProperty.projectSlug}`
+    : `/propiedades/${activeProperty.slug}`;
+  const activePropertyLabel = activeProperty.projectSlug ? "Entrar al proyecto" : "Ver oportunidad destacada";
 
   return (
     <div className="relative min-h-[38rem] overflow-hidden rounded-[2.3rem] bg-[color:var(--surface-container-lowest)] shadow-[0_28px_70px_rgba(27,28,25,0.08)]">
@@ -88,10 +92,10 @@ export function HeroPropertyRotator({ properties }: HeroPropertyRotatorProps) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild variant="inverse" size="lg">
-                <Link href={`/propiedades/${activeProperty.slug}`}>Ver oportunidad destacada</Link>
+                <Link href={activePropertyHref}>{activePropertyLabel}</Link>
               </Button>
               <p className="m-0 text-sm leading-6 text-white/72">
-                Inventario filtrado para ayudarte a avanzar mas rapido hacia una decision.
+                La exploración parte del proyecto para que entiendas mejor el contexto antes de elegir una unidad.
               </p>
             </div>
 

@@ -70,10 +70,12 @@ export function SiteHeader() {
     `site-nav__link${isActive ? " site-nav__link--active" : ""}`;
   const mobileNavLinkClass = (isActive: boolean) =>
     `site-mobile-nav__link${isActive ? " site-mobile-nav__link--active" : ""}`;
+  const isCatalogSection =
+    (pathname?.startsWith("/catalogo") ?? false) || (pathname?.startsWith("/proyectos") ?? false);
 
   const mobileNavItems = [
     { href: "/", label: "Inicio", active: pathname === "/", icon: House },
-    { href: "/catalogo", label: "Catalogo", active: pathname?.startsWith("/catalogo") ?? false, icon: Search },
+    { href: "/catalogo", label: "Catalogo", active: isCatalogSection, icon: Search },
     ...(isAdmin ? [{ href: "/admin", label: "Admin", active: pathname?.startsWith("/admin") ?? false, icon: UserRound }] : []),
     {
       href: user ? "/favoritos" : "/login",
@@ -108,7 +110,7 @@ export function SiteHeader() {
             <Link className={navLinkClass(pathname === "/")} href="/">
               Inicio
             </Link>
-            <Link className={navLinkClass(pathname?.startsWith("/catalogo") ?? false)} href="/catalogo">
+            <Link className={navLinkClass(isCatalogSection)} href="/catalogo">
               Catálogo
             </Link>
             <Link className="site-nav__link hover-lift" href="/#broker">

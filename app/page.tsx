@@ -1,25 +1,19 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle, MessageCircle } from "lucide-react";
-import { BrokerWavePortrait } from "@/components/broker-wave-portrait";
 import { PropertyCard } from "@/components/property-card";
 import { ProjectCard } from "@/components/project-card";
-import { PropertySearch } from "@/components/property-search";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppUrl } from "@/lib/contact";
-import { getFeaturedPublicProperties, listPublicProjects, listPublicPropertyTypes, listPublicProperties, getFeaturedPublicProjects } from "@/lib/properties";
+import { getFeaturedPublicProperties, getFeaturedPublicProjects } from "@/lib/properties";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
   const featuredProperties = await getFeaturedPublicProperties(3);
   const featuredProjects = await getFeaturedPublicProjects(3);
-  const projects = await listPublicProjects();
-  const propertyTypes = await listPublicPropertyTypes();
-  const allProperties = await listPublicProperties();
-  const locations = Array.from(new Set(allProperties.map(p => p.location))).filter(Boolean).sort();
 
   const brokerWhatsApp = buildWhatsAppUrl(
     "Hola Carlos, me interesa conversar sobre propiedades premium en República Dominicana.",
@@ -90,7 +84,7 @@ export default async function HomePage() {
                     className="bg-white/80 backdrop-blur-sm rounded-full px-8 py-6 text-base"
                   >
                     <Link href="/catalogo" className="inline-flex items-center gap-2">
-                      Explorar catálogo
+                      Explorar proyectos
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </Button>
@@ -144,33 +138,22 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* SEARCH SECTION - Floating over background */}
-        <section className="relative z-20 pb-16">
-          <div className="page-shell">
-            <PropertySearch
-              projects={projects}
-              propertyTypes={propertyTypes}
-              locations={locations}
-            />
-          </div>
-        </section>
-
         {/* FEATURED PROPERTIES SECTION */}
-        <section className="pt-8 pb-20 lg:pb-28 bg-[#fbf9f4]">
+        <section className="pt-16 pb-20 lg:pb-28 bg-[#fbf9f4]">
           <div className="page-shell">
             {/* Section Header */}
             <div className="mb-12 lg:mb-16 text-center max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-3 mb-4">
                 <span className="h-px w-8 bg-primary/30" />
-                <p className="eyebrow m-0 text-primary">Selección Exclusiva</p>
+                <p className="eyebrow m-0 text-primary">Selección Dentro De Proyectos</p>
                 <span className="h-px w-8 bg-primary/30" />
               </div>
               <h2 className="m-0 font-serif text-[clamp(2.5rem,5vw,4rem)] leading-[0.95] tracking-[-0.04em] mb-4">
-                Propiedades destacadas
+                Oportunidades que se descubren desde su proyecto
               </h2>
               <p className="text-lg text-muted leading-relaxed max-w-2xl mx-auto">
-                Inventario curado con criterio. Cada propiedad representa una oportunidad verificada
-                con narrativa clara y potencial comprobado.
+                Mostramos algunas unidades para abrir apetito, pero la exploración correcta empieza
+                por el desarrollo: contexto, ubicación, inventario y luego la propiedad puntual.
               </p>
             </div>
 
@@ -184,7 +167,7 @@ export default async function HomePage() {
                       className="hover-lift animate-fade-in"
                       style={{ animationDelay: `${100 * featuredProperties.indexOf(property)}ms` }}
                     >
-                      <PropertyCard property={property} />
+                      <PropertyCard property={property} navigationMode="project" />
                     </div>
                   ))}
                 </div>
@@ -193,7 +176,7 @@ export default async function HomePage() {
                 <div className="text-center pt-8">
                   <Button asChild size="lg" className="!text-white shadow-lg rounded-full px-10">
                     <Link href="/catalogo" className="inline-flex items-center gap-2.5">
-                      Ver todas las propiedades
+                      Explorar todos los proyectos
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </Button>
@@ -201,7 +184,7 @@ export default async function HomePage() {
               </>
             ) : (
               <div className="text-center py-16">
-                <p className="text-muted text-lg">El catálogo se actualizará próximamente con nuevas oportunidades.</p>
+                <p className="text-muted text-lg">El directorio de proyectos se actualizará próximamente con nuevas oportunidades.</p>
                 {brokerWhatsApp && (
                   <Button asChild size="lg" className="mt-6 !text-white">
                     <a href={brokerWhatsApp} target="_blank" rel="noopener noreferrer">
@@ -216,7 +199,7 @@ export default async function HomePage() {
 
         {/* FEATURED PROJECTS SECTION */}
         {featuredProjects.length > 0 && (
-          <section className="py-20 lg:py-28 bg-white">
+          <section id="proyectos-destacados" className="py-20 lg:py-28 bg-white">
             <div className="page-shell">
               <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="max-w-2xl">
@@ -233,7 +216,7 @@ export default async function HomePage() {
                 </div>
                 <Button asChild variant="tertiary" size="lg" className="group">
                   <Link href="/catalogo" className="inline-flex items-center gap-2">
-                    Ver todos los proyectos
+                    Abrir directorio completo
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
@@ -379,7 +362,7 @@ export default async function HomePage() {
                     variant="secondary"
                     className="bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/15 rounded-full px-10 py-6 text-base w-full sm:w-auto"
                   >
-                    <Link href="/catalogo">Explorar catálogo completo</Link>
+                    <Link href="/catalogo">Explorar proyectos</Link>
                   </Button>
                 </div>
               </div>

@@ -33,6 +33,8 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const projectHref = property.projectSlug ? `/proyectos/${property.projectSlug}` : "/catalogo";
+  const projectBackLabel = property.projectSlug ? `Volver a ${property.project}` : "Volver al catálogo";
 
   return (
     <>
@@ -44,9 +46,9 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
         <div className="page-shell pt-8 pb-20">
           {/* Navigation Bar */}
           <div className="mb-10 flex items-center justify-between animate-fade-in" style={{ animationDelay: '100ms' }}>
-            <Link href="/catalogo" className="group flex items-center gap-2 eyebrow text-primary/60 hover:text-primary transition-colors">
+            <Link href={projectHref} className="group flex items-center gap-2 eyebrow text-primary/60 hover:text-primary transition-colors">
               <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1" />
-              Volver al catálogo
+              {projectBackLabel}
             </Link>
             <div className="flex items-center gap-4">
                <button className="p-2 rounded-full border border-outline/20 hover:bg-surface-soft transition-colors text-primary/60 hover:text-primary" title="Compartir">
@@ -75,6 +77,21 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
 
               <div className="grid gap-8 pt-4">
                 <div className="grid gap-4">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-primary/45">
+                    <Link href="/catalogo" className="transition-colors hover:text-primary">
+                      Catálogo
+                    </Link>
+                    <span>/</span>
+                    {property.projectSlug ? (
+                      <Link href={projectHref} className="transition-colors hover:text-primary">
+                        {property.project}
+                      </Link>
+                    ) : (
+                      <span>{property.project}</span>
+                    )}
+                    <span>/</span>
+                    <span className="text-primary/70">{property.title}</span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <span className="h-px w-8 bg-primary/30" />
                     <p className="eyebrow m-0 text-primary/60 tracking-[0.25em]">{property.project}</p>
@@ -121,6 +138,20 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
             {/* Right Column: Ficha & Lead Form */}
             <aside className="animate-fade-in" style={{ animationDelay: '350ms' }}>
               <div className="sticky top-[7.5rem] grid gap-8">
+                {property.projectSlug && (
+                  <div className="rounded-[2.5rem] border border-outline/10 bg-white/70 p-8 shadow-xl shadow-primary/5 backdrop-blur-xl">
+                    <p className="eyebrow m-0 text-primary/40 tracking-[0.3em] mb-4">Contexto del proyecto</p>
+                    <h3 className="font-serif text-2xl leading-tight text-primary mb-3">{property.project}</h3>
+                    <p className="text-muted leading-relaxed mb-6">
+                      Esta propiedad forma parte de un inventario más amplio. Si quieres comparar otras unidades,
+                      vuelve al proyecto y sigue la exploración desde ahí.
+                    </p>
+                    <Button asChild variant="secondary" className="w-full justify-center rounded-full">
+                      <Link href={projectHref}>Ver proyecto completo</Link>
+                    </Button>
+                  </div>
+                )}
+
                 {/* Financial Summary Card */}
                 <div className="luxury-card p-10 bg-white border-outline/10 shadow-xl shadow-primary/5 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />

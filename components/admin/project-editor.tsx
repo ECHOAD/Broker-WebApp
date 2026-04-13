@@ -139,7 +139,7 @@ export function ProjectEditor({
             {!isNew && (
               <>
                 <Button asChild variant="tertiary" className="hidden md:flex text-slate-600 hover:text-blue-600 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest border border-slate-100">
-                  <Link href={`/catalogo?project=${selectedProject?.name}`} target="_blank">
+                  <Link href={`/proyectos/${selectedProject?.slug}`} target="_blank">
                     <Eye className="w-4 h-4 mr-2" /> Ver Preview
                   </Link>
                 </Button>

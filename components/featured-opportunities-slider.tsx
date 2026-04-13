@@ -47,6 +47,7 @@ export function FeaturedOpportunitiesSlider({
   }
 
   const activeProperty = properties[activeIndex];
+  const activePropertyLabel = activeProperty.projectSlug ? "Entrar al proyecto" : "Ver detalle completo";
 
   return (
     <div className="grid gap-5">
@@ -106,10 +107,12 @@ export function FeaturedOpportunitiesSlider({
 
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Button asChild size="lg">
-                    <Link href={`/propiedades/${property.slug}`}>Ver detalle completo</Link>
+                    <Link href={property.projectSlug ? `/proyectos/${property.projectSlug}` : `/propiedades/${property.slug}`}>
+                      {property.projectSlug ? "Entrar al proyecto" : "Ver detalle completo"}
+                    </Link>
                   </Button>
                   <Button asChild size="lg" variant="tertiary">
-                    <Link href="/catalogo">Abrir catálogo</Link>
+                    <Link href="/catalogo">Abrir proyectos</Link>
                   </Button>
                 </div>
               </div>
@@ -183,7 +186,7 @@ export function FeaturedOpportunitiesSlider({
 
 
       <div className="sr-only" aria-live="polite">
-        Mostrando {activeProperty.title}
+        Mostrando {activeProperty.title}. AcciÃ³n principal disponible: {activePropertyLabel}.
       </div>
     </div>
   );
