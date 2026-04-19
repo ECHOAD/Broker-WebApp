@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FavoriteToggle } from "@/components/favorite-toggle";
+import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyLeadForm } from "@/components/property-lead-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicPropertyBySlug, getPublicPropertySlugs } from "@/lib/properties";
@@ -61,19 +61,12 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
           <section className="grid lg:grid-cols-[1.3fr_0.7fr] gap-12 lg:gap-20">
             {/* Left Column: Visuals & Narrative */}
             <div className="grid gap-12 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <div className="relative overflow-hidden rounded-[2.5rem] bg-surface-deep shadow-2xl shadow-primary/5">
-                <img 
-                  src="/property-placeholder.jpg" 
-                  alt={property.title}
-                  className="w-full aspect-[16/10] object-cover"
-                />
-                <div className="absolute inset-0 border-[1px] border-white/10 rounded-[2.5rem] pointer-events-none" />
-                
-                <div className="absolute bottom-8 left-8 flex gap-2">
-                  <Badge className="bg-primary text-white border-none px-4 py-2 text-[10px] tracking-widest uppercase">{property.badge}</Badge>
-                  <Badge variant="outline" className="bg-white/80 backdrop-blur-md border-none text-primary px-4 py-2 text-[10px] tracking-widest uppercase font-bold">{property.status}</Badge>
-                </div>
-              </div>
+              <PropertyGallery
+                badge={property.badge}
+                fallbackTitle={property.title}
+                images={property.galleryImages}
+                status={property.status}
+              />
 
               <div className="grid gap-8 pt-4">
                 <div className="grid gap-4">
@@ -194,6 +187,12 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
                       <span className="text-xs eyebrow opacity-50 lowercase tracking-widest">Tipología</span>
                       <span className="font-serif text-lg text-primary">{property.type}</span>
                     </div>
+                    {property.dynamicFeatures.map((feature) => (
+                      <div key={`${feature.group}-${feature.label}-${feature.value}`} className="flex justify-between gap-6 items-end border-b border-outline/10 pb-4">
+                        <span className="text-xs eyebrow opacity-50 lowercase tracking-widest">{feature.label}</span>
+                        <span className="text-right font-serif text-lg text-primary">{feature.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

@@ -117,16 +117,16 @@ export function ProjectEditor({
 
       {/* BARRA DE ACCIÓN SUPERIOR */}
       <div className="sticky top-6 z-50">
-        <div className="bg-white/95 backdrop-blur-xl border border-blue-100 shadow-[0_20px_50px_rgba(0,0,0,0.06)] rounded-[2.5rem] p-3 pl-8 flex items-center justify-between gap-4 text-slate-900">
+        <div className="bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.06)] rounded-[2.5rem] p-3 pl-8 flex items-center justify-between gap-4 text-slate-900">
           <div className="flex items-center gap-4">
             <div className={cn(
               "w-10 h-10 rounded-full flex items-center justify-center shadow-inner",
-              isNew ? "bg-blue-600 text-white" : "bg-emerald-50 text-emerald-600"
+              isNew ? "border border-slate-200 bg-white text-slate-800" : "bg-emerald-50 text-emerald-600"
             )}>
               {isNew ? <Plus className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 m-0 mb-1 leading-none">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 m-0 mb-1 leading-none">
                 {isNew ? "Nuevo Proyecto" : "Editando ahora"}
               </p>
               <h2 className="font-serif text-lg text-slate-900 m-0 leading-none truncate max-w-[200px] md:max-w-md">
@@ -138,7 +138,7 @@ export function ProjectEditor({
           <div className="flex items-center gap-3">
             {!isNew && (
               <>
-                <Button asChild variant="tertiary" className="hidden md:flex text-slate-600 hover:text-blue-600 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest border border-slate-100">
+                <Button asChild variant="tertiary" className="hidden md:flex text-slate-600 hover:text-slate-900 rounded-2xl h-12 px-6 font-bold text-[11px] uppercase tracking-widest border border-slate-100">
                   <Link href={`/proyectos/${selectedProject?.slug}`} target="_blank">
                     <Eye className="w-4 h-4 mr-2" /> Ver Preview
                   </Link>
@@ -148,7 +148,7 @@ export function ProjectEditor({
                 </Button>
               </>
             )}
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] h-12 px-10 font-bold uppercase tracking-widest text-[11px] shadow-xl shadow-blue-100 transition-all active:scale-95" type="submit">
+            <Button className="border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-950 rounded-[1.5rem] h-12 px-10 font-bold uppercase tracking-widest text-[11px] shadow-xl shadow-slate-200/70 transition-all active:scale-95" type="submit">
               <Save className="w-4 h-4 mr-2" /> {isNew ? "Guardar Proyecto" : "Guardar cambios"}
             </Button>
           </div>
@@ -160,7 +160,7 @@ export function ProjectEditor({
         <div className="flex items-center justify-between border-b border-slate-50 pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
+              <span className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-800 flex items-center justify-center font-bold text-sm">1</span>
               <h3 className="font-serif text-2xl m-0">Presencia Visual</h3>
             </div>
             <p className="text-sm text-slate-500 pl-11">Esta foto será el fondo principal del proyecto. Usa una imagen impactante.</p>
@@ -173,14 +173,14 @@ export function ProjectEditor({
               htmlFor="main-image-hidden-input"
               className={cn(
                 "relative aspect-[21/9] w-full overflow-hidden flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] cursor-pointer hover:bg-slate-100 transition-all group",
-                pendingMainImage && "border-blue-200 bg-blue-50/30"
+                pendingMainImage && "border-slate-300 bg-slate-100"
               )}
             >
               {pendingMainImage ? (
                 <img src={URL.createObjectURL(pendingMainImage)} className="w-full h-full object-cover rounded-[2.8rem]" alt="Preview" />
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-slate-300 group-hover:text-blue-500 transition-all group-hover:scale-110">
+                  <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-slate-300 group-hover:text-slate-900 transition-all group-hover:scale-110">
                     <Camera className="w-7 h-7" />
                   </div>
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Click para subir foto de portada</span>
@@ -202,7 +202,7 @@ export function ProjectEditor({
           <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-10 relative">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">2</span>
+                <span className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-800 flex items-center justify-center font-bold text-sm">2</span>
                 <h3 className="font-serif text-2xl m-0">Identidad del Proyecto</h3>
               </div>
               <p className="text-sm text-slate-500 pl-11">Aquí definimos el nombre, la marca y dónde se ubica.</p>

@@ -182,7 +182,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                       </div>
                       <span className={cn(
                         "text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap",
-                        lead.current_status === 'new' ? "bg-blue-50 text-blue-600" :
+                        lead.current_status === 'new' ? "bg-slate-100 text-slate-700" :
                         lead.current_status === 'closed_won' ? "bg-emerald-50 text-emerald-600" :
                         "bg-slate-100 text-slate-600"
                       )}>

@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Building2, Briefcase, LogOut, Globe } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, LogOut, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Inicio", icon: LayoutDashboard },
   { href: "/admin/leads", label: "Clientes", icon: Users },
   { href: "/admin/projects", label: "Proyectos", icon: Briefcase },
-  { href: "/admin/properties", label: "Inmuebles", icon: Building2 },
 ];
 
 export function AdminSidebar() {

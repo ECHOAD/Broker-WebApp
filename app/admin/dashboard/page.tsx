@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-2xl tracking-tight text-slate-900">Estado de tus Clientes</h2>
-          <Link href="/admin/leads" className="text-xs font-semibold uppercase tracking-wider text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+          <Link href="/admin/leads" className="text-xs font-semibold uppercase tracking-wider text-slate-700 hover:text-slate-950 transition-colors flex items-center gap-1">
             Ir a la bandeja <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
@@ -77,8 +77,8 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Por Atender */}
           <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-[0_20px_40px_rgb(0,0,0,0.02)] flex flex-col gap-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
-            <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white relative z-10 shadow-lg shadow-blue-200">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100/70 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white relative z-10 shadow-lg shadow-slate-200">
               <Inbox className="w-6 h-6" />
             </div>
             <div className="space-y-1 relative z-10">
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-slate-500">Contactos que acaban de llegar y esperan respuesta.</p>
             </div>
             <div className="mt-auto pt-4 flex items-baseline gap-2 relative z-10">
-              <span className="font-serif text-5xl text-blue-600">{groupedLeads.nuevos}</span>
+              <span className="font-serif text-5xl text-slate-900">{groupedLeads.nuevos}</span>
               <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Pendientes</span>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
                     </div>
                     <span className={cn(
                       "text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full",
-                      lead.current_status === 'new' ? "bg-blue-50 text-blue-600" :
+                      lead.current_status === 'new' ? "bg-slate-100 text-slate-700" :
                       lead.current_status === 'closed_won' ? "bg-emerald-50 text-emerald-600" :
                       "bg-slate-100 text-slate-600"
                     )}>
@@ -195,7 +195,7 @@ export default async function DashboardPage() {
             </div>
 
             <Button asChild className="w-full bg-white text-black hover:bg-slate-200 rounded-2xl h-12 relative z-10 border-none">
-              <Link href="/admin/properties">Gestionar catálogo</Link>
+              <Link href="/admin/projects">Gestionar proyectos</Link>
             </Button>
           </div>
         </div>

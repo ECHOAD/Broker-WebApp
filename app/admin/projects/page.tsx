@@ -4,9 +4,23 @@ import { Database } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Briefcase, ChevronRight, LayoutGrid, Globe, Star } from "lucide-react";
+import { Plus, Search, ChevronRight, Globe, Star, Building2, Pencil, Image as ImageIcon } from "lucide-react";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectStatus = ProjectRow["status"];
+
+type ProjectPropertySummary = {
+  id: string;
+  property_type_id: string;
+  property_types: { label_es: string } | { label_es: string }[] | null;
+};
+
+type ProjectTableRow = Pick<
+  ProjectRow,
+  "id" | "name" | "slug" | "status" | "is_featured" | "sort_order" | "main_image_storage_path"
+> & {
+  properties: ProjectPropertySummary[];
+};
 
 type ProjectsPageProps = {
   searchParams: Promise<{
@@ -20,6 +34,40 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
 
+const getStatusClasses = (status: ProjectStatus) => {
+  if (status === "published") {
+    return "bg-emerald-50 text-emerald-700 border-emerald-100";
+  }
+
+  if (status === "draft") {
+    return "bg-amber-50 text-amber-700 border-amber-100";
+  }
+
+  return "bg-slate-100 text-slate-600 border-slate-200";
+};
+
+const getPropertyTypeLabel = (property: ProjectPropertySummary) => {
+  const relation = property.property_types;
+  if (Array.isArray(relation)) {
+    return relation[0]?.label_es ?? "Sin tipo";
+  }
+
+  return relation?.label_es ?? "Sin tipo";
+};
+
+const summarizePropertyTypes = (properties: ProjectPropertySummary[]) => {
+  const counts = new Map<string, number>();
+
+  for (const property of properties) {
+    const label = getPropertyTypeLabel(property);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .sort(([a], [b]) => a.localeCompare(b, "es"))
+    .map(([label, amount]) => ({ label, amount }));
+};
+
 export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
   const { q, status, page } = await searchParams;
   const { supabase } = await requireBrokerAdmin();
@@ -30,7 +78,10 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
   let query = supabase
     .from("projects")
-    .select("*, properties:properties(id)", { count: "exact" });
+    .select(
+      "id, name, slug, status, is_featured, sort_order, main_image_storage_path, properties:properties(id, property_type_id, property_types(label_es))",
+      { count: "exact" },
+    );
 
   if (q) {
     query = query.ilike("name", `%${q}%`);
@@ -54,7 +105,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
     throw new Error("No pudimos leer la información de los proyectos.");
   }
 
-  const projects = projectsData ?? [];
+  const projects = (projectsData ?? []) as unknown as ProjectTableRow[];
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
   return (
@@ -71,7 +122,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         
         <Link 
           href="/admin/projects/new"
-          className="inline-flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-[20px] text-sm font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200 group"
+          className="inline-flex items-center gap-3 rounded-[20px] border border-slate-200 bg-white px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-700 shadow-xl shadow-slate-200/70 transition-all hover:border-slate-300 hover:text-slate-950 hover:shadow-2xl group"
         >
           <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
           Nuevo Proyecto
@@ -117,79 +168,109 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         </div>
       </div>
 
-      {/* Grid List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.04)]">
         {projects.length === 0 ? (
-          <div className="col-span-full py-20">
+          <div className="py-20">
             <EmptyState eyebrow="Proyectos" description="No se encontraron proyectos con los filtros aplicados." />
           </div>
         ) : (
-          projects.map((project) => {
-            const coverUrl = project.main_image_storage_path
-              ? supabase.storage.from("property-media").getPublicUrl(project.main_image_storage_path).data.publicUrl
-              : null;
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-left">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Proyecto</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Estado</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Inmuebles</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Tipos de inmueble</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Orden</th>
+                  <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {projects.map((project) => {
+                  const coverUrl = project.main_image_storage_path
+                    ? supabase.storage.from("property-media").getPublicUrl(project.main_image_storage_path).data.publicUrl
+                    : null;
+                  const propertyTypes = summarizePropertyTypes(project.properties ?? []);
+                  const propertyCount = project.properties?.length ?? 0;
 
-            return (
-              <Link
-                key={project.id}
-                href={`/admin/projects/${project.id}`}
-                className="flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.06)] transition-all duration-500 group overflow-hidden"
-              >
-                <div className="aspect-[16/9] bg-slate-50 relative overflow-hidden">
-                  {coverUrl ? (
-                    <img
-                      src={coverUrl}
-                      alt={`Portada de ${project.name}`}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <LayoutGrid className="w-10 h-10 text-slate-200 group-hover:scale-110 transition-transform duration-700" />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent z-10" />
-                  <div className="absolute top-4 right-4 z-20">
-                    <span className={cn(
-                      "text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg",
-                      project.status === 'published' ? "bg-emerald-500/90 text-white" :
-                      project.status === 'draft' ? "bg-amber-500/90 text-white" :
-                      "bg-slate-500/90 text-white"
-                    )}>
-                      {PROJECT_STATUS_LABELS[project.status]}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-8 flex flex-col flex-1 gap-6">
-                  <div className="space-y-2">
-                    <h3 className="font-serif text-2xl text-slate-900 m-0 group-hover:text-blue-600 transition-colors">
-                      {project.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
-                      <Globe className="w-3.5 h-3.5" />
-                      <span>/{project.slug}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 text-slate-400">
-                        <Briefcase className="w-4 h-4" />
-                        <span className="text-[11px] font-bold uppercase tracking-wider">{project.properties?.length ?? 0}</span>
-                      </div>
-                      {project.is_featured && (
-                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      )}
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all">
-                      <ChevronRight className="w-5 h-5" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })
+                  return (
+                    <tr key={project.id} className="group transition-colors hover:bg-slate-50/60">
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+                            {coverUrl ? (
+                              <img src={coverUrl} alt={`Portada de ${project.name}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-slate-300">
+                                <ImageIcon className="h-5 w-5" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <Link href={`/admin/projects/${project.id}`} className="font-serif text-xl text-slate-900 transition-colors hover:text-slate-600">
+                                {project.name}
+                              </Link>
+                              {project.is_featured ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> : null}
+                            </div>
+                            <div className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-400">
+                              <Globe className="h-3.5 w-3.5" />
+                              <span>/{project.slug}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={cn("inline-flex rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest", getStatusClasses(project.status))}>
+                          {PROJECT_STATUS_LABELS[project.status]}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-serif text-3xl text-slate-900">{propertyCount}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">unidades</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        {propertyTypes.length > 0 ? (
+                          <div className="flex max-w-[320px] flex-wrap gap-2">
+                            {propertyTypes.map((type) => (
+                              <span key={type.label} className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                                {type.label} · {type.amount}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">Sin inmuebles</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-5 text-sm font-semibold text-slate-500">{project.sort_order}</td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/admin/projects/${project.id}`}
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-white px-4 text-[10px] font-bold uppercase tracking-widest text-slate-600 transition-all hover:border-slate-200 hover:text-slate-900 hover:shadow-sm"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Formulario
+                          </Link>
+                          <Link
+                            href={`/admin/properties?project=${project.id}`}
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-[10px] font-bold uppercase tracking-widest text-slate-700 transition-all hover:border-slate-300 hover:text-slate-950 hover:shadow-sm"
+                          >
+                            <Building2 className="h-4 w-4" />
+                            Inmuebles
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -203,7 +284,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
               className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold transition-all",
                 currentPage === p 
-                  ? "bg-slate-900 text-white shadow-xl" 
+                  ? "bg-white text-slate-950 shadow-xl border-slate-300" 
                   : "bg-white text-slate-400 hover:bg-slate-50 border border-slate-100"
               )}
             >

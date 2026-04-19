@@ -6,7 +6,23 @@ type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 type PropertyMediaRow = Database["public"]["Tables"]["property_media"]["Row"];
 type PropertyTypeRow = Database["public"]["Tables"]["property_types"]["Row"];
 const PROPERTY_SELECT =
+  "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, custom_features, is_featured";
+const PROPERTY_SELECT_FALLBACK =
   "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, is_featured";
+
+export type PropertyDynamicFeature = {
+  group: string;
+  label: string;
+  value: string;
+};
+
+export type PropertyGalleryImage = {
+  id: string;
+  url: string;
+  alt: string;
+  caption: string | null;
+  isCover: boolean;
+};
 
 export type PropertyCardData = {
   id: string;
@@ -36,6 +52,8 @@ export type PropertyDetailData = PropertyCardData & {
   bedrooms: number | null;
   bathrooms: number | null;
   parkingSpaces: number | null;
+  dynamicFeatures: PropertyDynamicFeature[];
+  galleryImages: PropertyGalleryImage[];
   highlights: string[];
   whatsappPhone: string | null;
 };
@@ -102,6 +120,31 @@ function resolvePriceLabel(property: PropertyRow) {
   return formatCurrency(property.price_amount, property.base_currency);
 }
 
+function isMissingCustomFeaturesError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("custom_features"));
+}
+
+function normalizeDynamicFeatures(value: PropertyRow["custom_features"]): PropertyDynamicFeature[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return null;
+      }
+
+      const record = item as Record<string, unknown>;
+      const label = typeof record.label === "string" ? record.label.trim() : "";
+      const featureValue = typeof record.value === "string" ? record.value.trim() : "";
+      const group = typeof record.group === "string" ? record.group.trim() : "";
+
+      return label && featureValue ? { group, label, value: featureValue } : null;
+    })
+    .filter((item): item is PropertyDynamicFeature => Boolean(item));
+}
+
 function buildBadge(property: PropertyRow, project: ProjectRow | null) {
   if (property.is_featured || project?.is_featured) {
     return "Selección editorial";
@@ -143,6 +186,10 @@ function buildHighlights(
     highlights.push(`${formatAreaSquareMeters(property.lot_area_m2)} m² de lote`);
   }
 
+  for (const feature of normalizeDynamicFeatures(property.custom_features)) {
+    highlights.push(`${feature.label}: ${feature.value}`);
+  }
+
   return highlights.slice(0, 5);
 }
 
@@ -159,6 +206,24 @@ function resolveCoverImage(
   }
 
   return buildPublicUrl(cover.storage_bucket, cover.storage_path);
+}
+
+function resolveGalleryImages(
+  property: PropertyRow,
+  mediaByPropertyId: Map<string, PropertyMediaRow[]>,
+  buildPublicUrl: (bucket: string, path: string) => string,
+): PropertyGalleryImage[] {
+  const media = mediaByPropertyId.get(property.id) ?? [];
+
+  return media
+    .map((item) => ({
+      id: item.id,
+      url: buildPublicUrl(item.storage_bucket, item.storage_path),
+      alt: item.alt_text ?? property.title,
+      caption: item.caption,
+      isCover: item.is_cover,
+    }))
+    .sort((left, right) => Number(right.isCover) - Number(left.isCover));
 }
 
 function mapPropertyRecord(
@@ -202,6 +267,8 @@ function mapPropertyRecord(
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
     parkingSpaces: property.parking_spaces,
+    dynamicFeatures: normalizeDynamicFeatures(property.custom_features),
+    galleryImages: resolveGalleryImages(property, mediaByPropertyId, buildPublicUrl),
     highlights: buildHighlights(property, project, propertyType),
     whatsappPhone: property.whatsapp_phone ?? project?.whatsapp_phone ?? null,
     coverImageUrl: resolveCoverImage(property.id, mediaByPropertyId, buildPublicUrl),
@@ -309,12 +376,23 @@ async function mapPublicProperties(properties: PropertyRow[]) {
 
 export async function listPublicProperties() {
   const supabase = createPublicClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("properties")
     .select(PROPERTY_SELECT)
     .order("is_featured", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
+
+  if (isMissingCustomFeaturesError(error)) {
+    const fallback = await supabase
+      .from("properties")
+      .select(PROPERTY_SELECT_FALLBACK)
+      .order("is_featured", { ascending: false })
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -331,11 +409,21 @@ export async function getFeaturedPublicProperties(limit = 3): Promise<PropertyCa
 
 export async function getPublicPropertyBySlug(slug: string) {
   const supabase = createPublicClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("properties")
     .select(PROPERTY_SELECT)
     .eq("slug", slug)
     .maybeSingle();
+
+  if (isMissingCustomFeaturesError(error)) {
+    const fallback = await supabase
+      .from("properties")
+      .select(PROPERTY_SELECT_FALLBACK)
+      .eq("slug", slug)
+      .maybeSingle();
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -377,7 +465,13 @@ export async function listPublicPropertiesByIds(propertyIds: string[]) {
   }
 
   const supabase = createPublicClient();
-  const { data, error } = await supabase.from("properties").select(PROPERTY_SELECT).in("id", propertyIds);
+  let { data, error } = await supabase.from("properties").select(PROPERTY_SELECT).in("id", propertyIds);
+
+  if (isMissingCustomFeaturesError(error)) {
+    const fallback = await supabase.from("properties").select(PROPERTY_SELECT_FALLBACK).in("id", propertyIds);
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -599,13 +693,25 @@ export async function getPublicProjectSlugs() {
 
 export async function listPublicPropertiesByProjectId(projectId: string) {
   const supabase = createPublicClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("properties")
     .select(PROPERTY_SELECT)
     .eq("project_id", projectId)
     .order("is_featured", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
+
+  if (isMissingCustomFeaturesError(error)) {
+    const fallback = await supabase
+      .from("properties")
+      .select(PROPERTY_SELECT_FALLBACK)
+      .eq("project_id", projectId)
+      .order("is_featured", { ascending: false })
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);

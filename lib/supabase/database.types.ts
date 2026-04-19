@@ -285,6 +285,7 @@ export type Database = {
           construction_area_m2: number | null;
           created_at: string;
           created_by: string | null;
+          custom_features: Json;
           description: string | null;
           id: string;
           is_featured: boolean;
@@ -312,6 +313,7 @@ export type Database = {
           construction_area_m2?: number | null;
           created_at?: string;
           created_by?: string | null;
+          custom_features?: Json;
           description?: string | null;
           id?: string;
           is_featured?: boolean;
@@ -339,6 +341,7 @@ export type Database = {
           construction_area_m2?: number | null;
           created_at?: string;
           created_by?: string | null;
+          custom_features?: Json;
           description?: string | null;
           id?: string;
           is_featured?: boolean;

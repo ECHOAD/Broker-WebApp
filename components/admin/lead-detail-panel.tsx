@@ -85,7 +85,7 @@ export function LeadDetailPanel({
         <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="bg-blue-50/50 border-blue-100 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+              <Badge variant="outline" className="bg-slate-100 border-slate-200 text-slate-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                 {selectedLead.currentStatusLabel}
               </Badge>
               <Badge variant="outline" className="bg-slate-50 border-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -147,7 +147,7 @@ export function LeadDetailPanel({
                   ))}
                 </select>
               </div>
-              <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-11 text-xs font-bold uppercase tracking-wider" type="submit">
+              <Button className="w-full border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-950 rounded-xl h-11 text-xs font-bold uppercase tracking-wider shadow-sm" type="submit">
                 Guardar Cambios
               </Button>
             </form>

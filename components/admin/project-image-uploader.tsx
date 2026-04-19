@@ -61,7 +61,7 @@ export function ProjectImageUploader({ projectId, initialImagePath }: ProjectIma
     <div className="relative group">
       <Card className={cn(
         "relative aspect-[21/9] w-full overflow-hidden flex items-center justify-center bg-slate-50 border-2 border-dashed transition-all duration-500 rounded-[2.5rem]",
-        initialImagePath ? "border-transparent shadow-sm" : "border-slate-200 hover:border-blue-300"
+        initialImagePath ? "border-transparent shadow-sm" : "border-slate-200 hover:border-slate-400"
       )}>
         {publicData.publicUrl ? (
           <img

@@ -7,7 +7,6 @@ const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "D" },
   { href: "/admin/leads", label: "Leads", icon: "L" },
   { href: "/admin/projects", label: "Proyectos", icon: "P" },
-  { href: "/admin/properties", label: "Inmuebles", icon: "I" },
 ];
 
 export function AdminNav() {
