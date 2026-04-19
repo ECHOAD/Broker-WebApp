@@ -14,7 +14,6 @@ type FavoriteToggleProps = {
 
 export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -44,7 +43,7 @@ export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
         .maybeSingle();
 
       if (error) {
-        setMessage("No pudimos leer tus favoritos.");
+        setMessage("Error al leer favoritos.");
         return;
       }
 
@@ -68,9 +67,7 @@ export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
     const supabase = createClient();
 
     if (!user) {
-      router.push(
-        `/login?next=/favoritos&pendingFavorite=${encodeURIComponent(propertyId)}`,
-      );
+      router.push(`/login?next=/favoritos&pendingFavorite=${encodeURIComponent(propertyId)}`);
       return;
     }
 
@@ -85,12 +82,7 @@ export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
         .eq("property_id", propertyId);
 
       setIsPending(false);
-
-      if (error) {
-        setMessage("No pudimos quitar este favorito.");
-        return;
-      }
-
+      if (error) return setMessage("Error al quitar.");
       setIsFavorite(false);
       router.refresh();
       return;
@@ -102,32 +94,39 @@ export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
     });
 
     setIsPending(false);
-
-    if (error) {
-      setMessage("No pudimos guardar este favorito.");
-      return;
-    }
-
+    if (error) return setMessage("Error al guardar.");
     setIsFavorite(true);
     router.refresh();
   }
 
   return (
-    <div className="favorite-stack">
+    <div className="relative group">
       <Button
         className={cn(
-          "justify-start",
-          isFavorite && "border-primary/20 bg-primary/10 text-primary",
+          "justify-start transition-all duration-500 active:scale-90 h-10 px-5 border-none shadow-none",
+          isFavorite 
+            ? "bg-accent/10 text-accent hover:bg-accent/20" 
+            : "bg-primary/5 text-primary/40 hover:bg-primary/10 hover:text-primary"
         )}
         disabled={isPending}
         type="button"
-        variant="secondary"
+        variant="ghost"
         onClick={handleToggle}
       >
-        <HeartIcon className={cn("size-4", isFavorite && "fill-current")} />
-        <span>{isFavorite ? "Guardado" : "Guardar"}</span>
+        <HeartIcon className={cn(
+          "size-4 transition-all duration-500", 
+          isFavorite ? "fill-accent stroke-accent scale-110" : "fill-transparent stroke-current"
+        )} />
+        <span className="text-[10px] font-bold uppercase tracking-widest ml-1">
+          {isFavorite ? "Guardado" : "Guardar"}
+        </span>
       </Button>
-      {message ? <small className="favorite-toggle__message">{message}</small> : null}
+      
+      {message && (
+        <span className="absolute top-full left-0 mt-2 text-[8px] font-bold uppercase text-accent animate-pulse whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm border border-accent/10 z-20">
+          {message}
+        </span>
+      )}
     </div>
   );
 }
