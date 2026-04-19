@@ -17,7 +17,7 @@ import {
   Check
 } from "lucide-react";
 
-type AuthMagicLinkFormProps = {
+type AuthPasswordFormProps = {
   nextPath: string;
   initialError: string | null;
   pendingFavorite?: string | null;
@@ -29,7 +29,7 @@ export function AuthPasswordForm({
   nextPath,
   onStepChange,
   onModeChange
-}: AuthMagicLinkFormProps) {
+}: AuthPasswordFormProps) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState(1);
 
@@ -105,24 +105,24 @@ export function AuthPasswordForm({
   }
 
   const InputLabel = ({ children }: { children: string }) => (
-    <label className="block eyebrow text-[10px] text-primary/50 uppercase tracking-[0.3em] mb-3 font-bold">
+    <label className="block eyebrow text-[10px] text-primary/50 uppercase tracking-[0.3em] mb-2.5 font-bold">
       {children}
     </label>
   );
 
   return (
     <div className="animate-fade-in w-full">
-      {/* Header Section */}
-      <div className="mb-14">
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-3 mb-4">
+      {/* Header Section - Reduced Margin */}
+      <div className="mb-10 lg:mb-12">
+        <div className="mb-4 lg:mb-6">
+          <div className="inline-flex items-center gap-3 mb-3 lg:mb-4">
             <div className="h-[1px] w-8 bg-primary/20" />
             <span className="eyebrow text-[9px] text-primary/40 uppercase tracking-[0.35em] font-bold">
               {mode === "login" ? "Acceso Privado" : `Fase ${step} de 3`}
             </span>
           </div>
 
-          <h1 className="font-serif text-[3.2rem] xl:text-[3.8rem] text-primary leading-[0.95] tracking-tight mb-5 italic">
+          <h1 className="font-serif text-[2.8rem] xl:text-[3.5rem] text-primary leading-[0.95] tracking-tight mb-4 italic">
             {mode === "login" ? "Bienvenido de vuelta." : (
               <>
                 {step === 1 && "¿Qué te trae hoy?"}
@@ -132,7 +132,7 @@ export function AuthPasswordForm({
             )}
           </h1>
 
-          <p className="text-muted text-[15px] max-w-[380px] leading-[1.7]">
+          <p className="text-muted text-[14px] max-w-[360px] leading-[1.6]">
             {mode === "login"
               ? "Accede a tu portfolio exclusivo de inversiones y propiedades guardadas."
               : (
@@ -146,34 +146,34 @@ export function AuthPasswordForm({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid gap-12">
-        <div className="min-h-[320px]">
+      <form onSubmit={handleSubmit} className="grid gap-8 lg:gap-10">
+        <div className="min-h-[auto]">
           {mode === "login" ? (
-            <div className="grid gap-7 animate-in fade-in slide-in-from-bottom-3 duration-700">
-              <div className="grid gap-3">
+            <div className="grid gap-6 animate-in fade-in slide-in-from-bottom-3 duration-700">
+              <div className="grid gap-2">
                 <InputLabel>Correo Electrónico</InputLabel>
                 <div className="relative">
-                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                   <input
                     required
                     type="email"
                     placeholder="nombre@correo.com"
-                    className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 <InputLabel>Contraseña</InputLabel>
                 <div className="relative">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                   <input
                     required
                     type="password"
                     placeholder="••••••••••"
-                    className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -183,9 +183,9 @@ export function AuthPasswordForm({
           ) : (
             <div className="flex-1">
               {step === 1 && (
-                <div className="grid gap-5 animate-in fade-in slide-in-from-right-5 duration-700">
+                <div className="grid gap-4 animate-in fade-in slide-in-from-right-5 duration-700">
                   <InputLabel>Selecciona tu objetivo principal</InputLabel>
-                  <div className="grid gap-4">
+                  <div className="grid gap-3">
                     {[
                       {
                         id: 'Inversión',
@@ -217,45 +217,30 @@ export function AuthPasswordForm({
                           key={item.id}
                           type="button"
                           onClick={() => setInterestType(item.id)}
-                          className={`group relative flex items-start gap-6 p-6 rounded-[24px] border-2 transition-all duration-500 overflow-hidden ${
+                          className={`group relative flex items-start gap-5 p-5 rounded-[20px] border-2 transition-all duration-500 overflow-hidden ${
                             isSelected
-                              ? 'bg-primary border-primary text-white shadow-[0_20px_60px_rgba(0,51,54,0.25)] scale-[1.02]'
-                              : 'bg-white border-outline/10 text-primary/70 hover:border-primary/20 hover:shadow-lg hover:scale-[1.01]'
+                              ? 'bg-primary border-primary text-white shadow-lg scale-[1.02]'
+                              : 'bg-white border-outline/10 text-primary/70 hover:border-primary/20 hover:scale-[1.01]'
                           }`}
                         >
-                          {/* Background gradient on hover/selected */}
                           <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 transition-opacity duration-500 ${
                             isSelected ? 'opacity-100' : 'group-hover:opacity-5'
                           }`} />
 
-                          {/* Icon Container */}
-                          <div className={`relative flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                            isSelected
-                              ? 'bg-white/20 backdrop-blur-sm'
-                              : 'bg-surface-soft group-hover:bg-primary/5'
+                          <div className={`relative flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 ${
+                            isSelected ? 'bg-white/20 backdrop-blur-sm' : 'bg-surface-soft'
                           }`}>
-                            <Icon size={24} strokeWidth={1.5} className={`transition-all duration-500 ${
-                              isSelected ? 'text-white' : 'text-primary/60 group-hover:text-primary'
-                            }`} />
+                            <Icon size={20} strokeWidth={1.5} className={isSelected ? 'text-white' : 'text-primary/60'} />
                           </div>
 
-                          {/* Content */}
                           <div className="relative flex-1 text-left">
-                            <div className="flex items-center gap-3 mb-2">
-                              <p className={`text-[13px] font-bold uppercase tracking-[0.15em] m-0 leading-none transition-colors duration-500 ${
-                                isSelected ? 'text-white' : 'text-primary group-hover:text-primary'
-                              }`}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className={`text-[12px] font-bold uppercase tracking-[0.1em] m-0 ${isSelected ? 'text-white' : 'text-primary'}`}>
                                 {item.title}
                               </p>
-                              {isSelected && (
-                                <div className="w-5 h-5 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center animate-in zoom-in duration-300">
-                                  <Check size={12} className="text-white" strokeWidth={3} />
-                                </div>
-                              )}
+                              {isSelected && <Check size={10} className="text-white" strokeWidth={4} />}
                             </div>
-                            <p className={`text-[13px] m-0 leading-[1.6] transition-colors duration-500 ${
-                              isSelected ? 'text-white/85' : 'text-primary/50 group-hover:text-primary/70'
-                            }`}>
+                            <p className={`text-[12px] m-0 leading-tight ${isSelected ? 'text-white/80' : 'text-primary/50'}`}>
                               {item.desc}
                             </p>
                           </div>
@@ -267,98 +252,90 @@ export function AuthPasswordForm({
               )}
 
               {step === 2 && (
-                <div className="grid gap-7 animate-in fade-in slide-in-from-right-5 duration-700">
-                  <div className="grid gap-3">
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-5 duration-700">
+                  <div className="grid gap-2">
                     <InputLabel>Nombre Completo</InputLabel>
                     <div className="relative">
-                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                       <input
                         required
                         placeholder="Como aparecerá en tu perfil"
-                        className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-2">
                     <InputLabel>Teléfono WhatsApp</InputLabel>
                     <div className="relative">
-                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                       <input
                         required
                         type="tel"
                         placeholder="+1 (809) 555-0123"
-                        className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-2">
                     <InputLabel>Idioma Preferido</InputLabel>
-                    <div className="relative">
-                      <Globe className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30 z-10" size={18} />
-                      <div className="flex gap-3 p-1.5 bg-surface-soft/80 rounded-[20px] border border-outline/8">
-                        {[
-                          { code: 'es', label: 'Español', flag: '🇩🇴' },
-                          { code: 'en', label: 'English', flag: '🇺🇸' }
-                        ].map((lang) => (
-                          <button
-                            key={lang.code}
-                            type="button"
-                            onClick={() => setLanguage(lang.code)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] text-[13px] font-bold uppercase tracking-[0.1em] transition-all duration-300 ${
-                              language === lang.code
-                                ? 'bg-primary text-white shadow-lg scale-[1.02]'
-                                : 'text-primary/40 hover:text-primary/70 hover:bg-white/60'
-                            }`}
-                          >
-                            <span className="text-lg">{lang.flag}</span>
-                            <span>{lang.label}</span>
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex gap-3 p-1 bg-surface-soft/80 rounded-[18px] border border-outline/8">
+                      {[
+                        { code: 'es', label: 'Español', flag: '🇩🇴' },
+                        { code: 'en', label: 'English', flag: '🇺🇸' }
+                      ].map((lang) => (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => setLanguage(lang.code)}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[15px] text-[11px] font-bold uppercase tracking-[0.1em] transition-all ${
+                            language === lang.code ? 'bg-primary text-white shadow-md' : 'text-primary/40 hover:text-primary/70'
+                          }`}
+                        >
+                          <span>{lang.flag}</span>
+                          <span>{lang.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
 
               {step === 3 && (
-                <div className="grid gap-7 animate-in fade-in slide-in-from-right-5 duration-700">
-                  <div className="grid gap-3">
+                <div className="grid gap-6 animate-in fade-in slide-in-from-right-5 duration-700">
+                  <div className="grid gap-2">
                     <InputLabel>Correo Electrónico</InputLabel>
                     <div className="relative">
-                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                       <input
                         required
                         type="email"
                         placeholder="tu@email.com"
-                        className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-2">
                     <InputLabel>Contraseña Segura</InputLabel>
                     <div className="relative">
-                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={18} />
+                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/30" size={17} />
                       <input
                         required
                         type="password"
                         placeholder="Mínimo 6 caracteres"
-                        className="w-full pl-14 pr-6 py-4 bg-surface-soft/80 border border-outline/8 rounded-[20px] font-sans text-[15px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="w-full pl-14 pr-6 py-3.5 bg-surface-soft/80 border border-outline/8 rounded-[18px] font-sans text-[14px] text-primary placeholder:text-primary/25 focus:outline-none focus:border-primary/25 focus:bg-white transition-all duration-300"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
-                    <p className="text-[11px] text-primary/40 leading-[1.6] mt-1">
-                      Usa una combinación de letras, números y símbolos para mayor seguridad.
-                    </p>
                   </div>
                 </div>
               )}
@@ -367,48 +344,48 @@ export function AuthPasswordForm({
         </div>
 
         {message && (
-          <div className="p-5 bg-primary/8 border border-primary/15 rounded-[20px] animate-in zoom-in-95 duration-300">
-            <p className="text-[12px] text-center font-semibold text-primary m-0 leading-[1.6]">
+          <div className="p-4 bg-primary/8 border border-primary/15 rounded-[18px] animate-in zoom-in-95 duration-300">
+            <p className="text-[11px] text-center font-semibold text-primary m-0 leading-tight">
               {message}
             </p>
           </div>
         )}
 
-        <div className="grid gap-10">
-          <div className="flex gap-4">
+        <div className="grid gap-6 lg:gap-8">
+          <div className="flex gap-3">
             {mode === "signup" && step > 1 && (
               <button
                 type="button"
                 onClick={prevStep}
-                className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-outline/15 text-primary/50 hover:text-primary hover:bg-surface-soft hover:border-primary/25 transition-all duration-300 bg-white shadow-sm hover:shadow-lg hover:scale-105"
+                className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-outline/15 text-primary/50 hover:text-primary hover:bg-surface-soft transition-all duration-300 bg-white"
               >
-                <ArrowLeft size={20} strokeWidth={2} />
+                <ArrowLeft size={18} strokeWidth={2} />
               </button>
             )}
 
             <Button
-              className="flex-1 rounded-full h-16 bg-gradient-to-r from-primary via-primary-soft to-primary text-white hover:shadow-[0_20px_60px_rgba(0,51,54,0.3)] shadow-xl font-bold tracking-[0.15em] uppercase text-[11px] group transition-all duration-500 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 rounded-full h-14 lg:h-16 bg-gradient-to-r from-primary via-primary-soft to-primary text-white shadow-lg font-bold tracking-[0.15em] uppercase text-[10px] group transition-all duration-500 hover:scale-[1.02] disabled:opacity-60"
               disabled={isPending}
               type="submit"
             >
               {isPending ? (
-                <span className="flex items-center gap-3">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Procesando...
                 </span>
               ) : (
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-2">
                   {mode === "login" ? "Acceder" : (step === 3 ? "Completar Registro" : "Siguiente")}
-                  <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2.5} />
+                  <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2.5} />
                 </span>
               )}
             </Button>
           </div>
 
-          <div className="pt-6 border-t border-outline/8 text-center">
+          <div className="pt-4 border-t border-outline/8 text-center">
             <button
               type="button"
               onClick={() => {
@@ -416,19 +393,19 @@ export function AuthPasswordForm({
                 setStep(1);
                 setMessage(null);
               }}
-              className="group inline-flex items-center gap-2 text-[11px] eyebrow tracking-[0.2em] text-primary/35 hover:text-primary transition-colors duration-300 uppercase font-bold"
+              className="group inline-flex items-center gap-2 text-[10px] eyebrow tracking-[0.2em] text-primary/35 hover:text-primary transition-colors duration-300 uppercase font-bold"
             >
               {mode === "login" ? (
                 <>
                   <span>¿Primera vez aquí?</span>
-                  <span className="font-serif normal-case italic text-[13px] tracking-normal underline decoration-primary/20 group-hover:decoration-primary transition-colors">
+                  <span className="font-serif normal-case italic text-[12px] tracking-normal underline decoration-primary/20 group-hover:decoration-primary">
                     Crear cuenta
                   </span>
                 </>
               ) : (
                 <>
                   <span>¿Ya tienes cuenta?</span>
-                  <span className="font-serif normal-case italic text-[13px] tracking-normal underline decoration-primary/20 group-hover:decoration-primary transition-colors">
+                  <span className="font-serif normal-case italic text-[12px] tracking-normal underline decoration-primary/20 group-hover:decoration-primary">
                     Iniciar sesión
                   </span>
                 </>

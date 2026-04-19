@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AuthPasswordForm } from "@/components/auth-magic-link-form";
+import { AuthPasswordForm } from "@/components/auth-password-form";
 import { X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
