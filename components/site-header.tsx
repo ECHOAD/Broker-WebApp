@@ -78,9 +78,9 @@ export function SiteHeader() {
     { href: "/catalogo", label: "Catalogo", active: isCatalogSection, icon: Search },
     ...(isAdmin ? [{ href: "/admin", label: "Admin", active: pathname?.startsWith("/admin") ?? false, icon: UserRound }] : []),
     {
-      href: user ? "/favoritos" : "/login",
+      href: user ? "/favoritos" : "/auth",
       label: user ? "Favoritos" : "Sesion",
-      active: user ? pathname?.startsWith("/favoritos") ?? false : pathname?.startsWith("/login") ?? false,
+      active: user ? pathname?.startsWith("/favoritos") ?? false : pathname?.startsWith("/auth") ?? false,
       icon: user ? Heart : UserRound,
     },
   ];
@@ -143,7 +143,7 @@ export function SiteHeader() {
               </>
             ) : (
               <Button asChild className="site-header__action rounded-full px-8 shadow-lg shadow-primary/10">
-                <Link href="/login">Acceso</Link>
+                <Link href="/auth">Acceso</Link>
               </Button>
             )}
           </nav>
@@ -155,7 +155,7 @@ export function SiteHeader() {
               </Button>
             ) : (
               <Button asChild>
-                <Link href="/login">Iniciar sesion</Link>
+                <Link href="/auth">Iniciar sesion</Link>
               </Button>
             )}
           </div>

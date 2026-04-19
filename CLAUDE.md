@@ -34,7 +34,7 @@ Required in `.env.local`:
 | `/catalogo` | Public | Property catalog with filters |
 | `/propiedades/[slug]` | Public | Property detail page |
 | `/favoritos` | Authenticated | Saved properties |
-| `/login` | Public | Magic link auth |
+| `/auth` | Public | Unified login & signup flow |
 | `/admin` | `broker_admin` | CRM + inventory management |
 | `/auth/confirm` | System | OTP/code exchange callback |
 | `/api/public-leads` | Public API | Lead capture POST endpoint |
@@ -56,7 +56,7 @@ Two client factories — use the correct one:
 ### Admin Panel
 
 `/admin` is a single Server Component page (`app/admin/page.tsx`) that:
-1. Guards with `broker_admin` role check (redirects to `/login` if unauthenticated)
+1. Guards with `broker_admin` role check (redirects to `/auth` if unauthenticated)
 2. Fetches all data in parallel (`Promise.all`)
 3. Computes derived state (pipeline counts, selected items from URL `?lead=`, `?project=`, `?property=` params)
 4. Renders three panels: lead pipeline, lead detail, and inventory editor (projects + properties)

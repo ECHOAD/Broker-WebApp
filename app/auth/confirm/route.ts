@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  redirectTo.pathname = "/login";
+  redirectTo.pathname = "/auth";
   redirectTo.searchParams.set("error", "auth_callback");
   return NextResponse.redirect(redirectTo);
 }

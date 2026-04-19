@@ -67,7 +67,7 @@ export function FavoriteToggle({ propertyId }: FavoriteToggleProps) {
     const supabase = createClient();
 
     if (!user) {
-      router.push(`/login?next=/favoritos&pendingFavorite=${encodeURIComponent(propertyId)}`);
+      router.push(`/auth?next=/favoritos&pendingFavorite=${encodeURIComponent(propertyId)}`);
       return;
     }
 

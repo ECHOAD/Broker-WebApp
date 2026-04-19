@@ -12,7 +12,6 @@ export function FloatingWhatsAppButton() {
   if (
     !whatsappUrl ||
     pathname?.startsWith("/admin") ||
-    pathname?.startsWith("/login") ||
     pathname?.startsWith("/auth")
   ) {
     return null;

@@ -8,7 +8,7 @@ export async function requireBrokerAdmin() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?next=/admin");
+    redirect("/auth?next=/admin");
   }
 
   const { data: profile, error: profileError } = await supabase

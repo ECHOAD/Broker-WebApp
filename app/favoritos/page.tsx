@@ -36,7 +36,7 @@ export default function FavoritosPage() {
       }
 
       if (!currentUser) {
-        router.push("/login?next=/favoritos");
+        router.push("/auth?next=/favoritos");
         return;
       }
 

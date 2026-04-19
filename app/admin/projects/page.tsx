@@ -1,14 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import { requireBrokerAdmin } from "@/lib/auth";
 import { PROJECT_STATUS_LABELS } from "@/lib/admin";
 import { Database } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Filter, Briefcase, ChevronRight, LayoutGrid, Globe, Clock, Star } from "lucide-react";
+import { Plus, Search, Briefcase, ChevronRight, LayoutGrid, Globe, Star } from "lucide-react";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
-type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 
 type ProjectsPageProps = {
   searchParams: Promise<{
@@ -126,59 +124,72 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             <EmptyState eyebrow="Proyectos" description="No se encontraron proyectos con los filtros aplicados." />
           </div>
         ) : (
-          projects.map((project) => (
-            <Link
-              key={project.id}
-              href={`/admin/projects/${project.id}`}
-              className="flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.06)] transition-all duration-500 group overflow-hidden"
-            >
-              {/* Cover Preview (Placeholder or real) */}
-              <div className="aspect-[16/9] bg-slate-50 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
-                <div className="absolute top-4 right-4 z-20">
-                  <span className={cn(
-                    "text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg",
-                    project.status === 'published' ? "bg-emerald-500/90 text-white" :
-                    project.status === 'draft' ? "bg-amber-500/90 text-white" :
-                    "bg-slate-500/90 text-white"
-                  )}>
-                    {PROJECT_STATUS_LABELS[project.status]}
-                  </span>
-                </div>
-                {/* Image would go here if we had a direct URL helper here */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <LayoutGrid className="w-10 h-10 text-slate-200 group-hover:scale-110 transition-transform duration-700" />
-                </div>
-              </div>
+          projects.map((project) => {
+            const coverUrl = project.main_image_storage_path
+              ? supabase.storage.from("property-media").getPublicUrl(project.main_image_storage_path).data.publicUrl
+              : null;
 
-              <div className="p-8 flex flex-col flex-1 gap-6">
-                <div className="space-y-2">
-                  <h3 className="font-serif text-2xl text-slate-900 m-0 group-hover:text-blue-600 transition-colors">
-                    {project.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>/{project.slug}</span>
-                  </div>
-                </div>
-
-                <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-slate-400">
-                      <Briefcase className="w-4 h-4" />
-                      <span className="text-[11px] font-bold uppercase tracking-wider">{project.properties?.length ?? 0}</span>
+            return (
+              <Link
+                key={project.id}
+                href={`/admin/projects/${project.id}`}
+                className="flex flex-col bg-white rounded-[32px] border border-slate-100 shadow-[0_15px_45px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.06)] transition-all duration-500 group overflow-hidden"
+              >
+                <div className="aspect-[16/9] bg-slate-50 relative overflow-hidden">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={`Portada de ${project.name}`}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <LayoutGrid className="w-10 h-10 text-slate-200 group-hover:scale-110 transition-transform duration-700" />
                     </div>
-                    {project.is_featured && (
-                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    )}
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all">
-                    <ChevronRight className="w-5 h-5" />
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent z-10" />
+                  <div className="absolute top-4 right-4 z-20">
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg",
+                      project.status === 'published' ? "bg-emerald-500/90 text-white" :
+                      project.status === 'draft' ? "bg-amber-500/90 text-white" :
+                      "bg-slate-500/90 text-white"
+                    )}>
+                      {PROJECT_STATUS_LABELS[project.status]}
+                    </span>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))
+
+                <div className="p-8 flex flex-col flex-1 gap-6">
+                  <div className="space-y-2">
+                    <h3 className="font-serif text-2xl text-slate-900 m-0 group-hover:text-blue-600 transition-colors">
+                      {project.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>/{project.slug}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <Briefcase className="w-4 h-4" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider">{project.properties?.length ?? 0}</span>
+                      </div>
+                      {project.is_featured && (
+                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      )}
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-white transition-all">
+                      <ChevronRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })
         )}
       </div>
 
