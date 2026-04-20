@@ -16,7 +16,11 @@ export default async function ProjectEditPage({ params }: ProjectEditPageProps) 
   const { supabase } = await requireBrokerAdmin();
 
   const [projectResult, locations, propertiesResult] = await Promise.all([
-    supabase.from("projects").select("*").eq("id", id).single(),
+    supabase
+      .from("projects")
+      .select("*, project_inventory_summaries(*)")
+      .eq("id", id)
+      .single(),
     listLocations(),
     supabase.from("properties").select("id", { count: "exact", head: true }).eq("project_id", id),
   ]);
@@ -42,6 +46,25 @@ export default async function ProjectEditPage({ params }: ProjectEditPageProps) 
     isFeatured: project.is_featured,
     logoStoragePath: project.logo_storage_path,
     mainImageStoragePath: project.main_image_storage_path,
+    inventorySummaries: (project.project_inventory_summaries ?? [])
+      .sort((left: any, right: any) => left.sort_order - right.sort_order)
+      .map((summary: any) => ({
+        id: summary.id,
+        modelName: summary.model_name,
+        lotSizeMinM2: summary.lot_size_min_m2,
+        lotSizeMaxM2: summary.lot_size_max_m2,
+        habitableAreaM2: summary.habitable_area_m2,
+        constructionAreaM2: summary.construction_area_m2,
+        priceMin: summary.price_min,
+        priceMax: summary.price_max,
+        availableLots: summary.available_lots,
+        totalLots: summary.total_lots,
+        bedrooms: summary.bedrooms,
+        bathrooms: summary.bathrooms,
+        statusNote: summary.status_note,
+        sortOrder: summary.sort_order,
+        isActive: summary.is_active,
+      })),
   };
 
   return (

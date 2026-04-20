@@ -33,11 +33,15 @@ type PropertyWithMedia = Pick<
   | "price_mode"
   | "base_currency"
   | "price_amount"
+  | "price_min_amount"
+  | "price_max_amount"
   | "bedrooms"
   | "bathrooms"
   | "parking_spaces"
   | "construction_area_m2"
   | "lot_area_m2"
+  | "lot_area_min_m2"
+  | "lot_area_max_m2"
   | "approximate_location_text"
   | "whatsapp_phone"
   | "is_featured"
@@ -48,6 +52,21 @@ type PropertyWithMedia = Pick<
 };
 
 export const dynamic = "force-dynamic";
+
+function formatPropertyPrice(property: PropertyWithMedia) {
+  if (property.price_mode !== "range") {
+    return formatCurrency(property.price_amount, property.base_currency, property.price_mode);
+  }
+
+  const min = property.price_min_amount ?? property.price_amount;
+  const max = property.price_max_amount;
+
+  if (min !== null && max !== null && min !== max) {
+    return `${formatCurrency(min, property.base_currency, "fixed")} - ${formatCurrency(max, property.base_currency, "fixed")}`;
+  }
+
+  return formatCurrency(min, property.base_currency, "range");
+}
 
 export default async function PropertiesPage({ searchParams }: PropertiesPageProps) {
   const { project: projectParam } = await searchParams;
@@ -65,7 +84,7 @@ export default async function PropertiesPage({ searchParams }: PropertiesPagePro
     supabase
       .from("properties")
       .select(
-        "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, is_featured, created_at, published_at, property_media(id, storage_path, is_cover)",
+        "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, price_min_amount, price_max_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, lot_area_min_m2, lot_area_max_m2, approximate_location_text, whatsapp_phone, is_featured, created_at, published_at, property_media(id, storage_path, is_cover)",
       )
       .order("is_featured", { ascending: false })
       .order("created_at", { ascending: false }),
@@ -225,7 +244,7 @@ export default async function PropertiesPage({ searchParams }: PropertiesPagePro
                         </div>
                       </td>
                       <td className="px-6 py-5 text-sm font-semibold text-slate-700">
-                        {formatCurrency(property.price_amount, property.base_currency, property.price_mode)}
+                        {formatPropertyPrice(property)}
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -233,6 +252,16 @@ export default async function PropertiesPage({ searchParams }: PropertiesPagePro
                           {property.bathrooms !== null ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1"><Bath className="h-3 w-3" />{property.bathrooms}</span> : null}
                           {property.parking_spaces !== null ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1"><Car className="h-3 w-3" />{property.parking_spaces}</span> : null}
                           {property.construction_area_m2 !== null ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1"><Ruler className="h-3 w-3" />{property.construction_area_m2} m²</span> : null}
+                          {property.lot_area_min_m2 !== null || property.lot_area_max_m2 !== null ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1">
+                              <Ruler className="h-3 w-3" />
+                              {property.lot_area_min_m2 ?? property.lot_area_max_m2}
+                              {property.lot_area_max_m2 && property.lot_area_max_m2 !== property.lot_area_min_m2
+                                ? `-${property.lot_area_max_m2}`
+                                : ""}{" "}
+                              m² lote
+                            </span>
+                          ) : null}
                         </div>
                       </td>
                       <td className="px-6 py-5">

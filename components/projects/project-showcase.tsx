@@ -31,6 +31,49 @@ type ProjectShowcaseProps = {
   properties: PropertyCardData[];
 };
 
+function formatNumber(value: number | null) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return new Intl.NumberFormat("es-DO", {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 1,
+  }).format(value);
+}
+
+function formatLotRange(min: number | null, max: number | null) {
+  const minLabel = formatNumber(min);
+  const maxLabel = formatNumber(max);
+
+  if (minLabel && maxLabel && minLabel !== maxLabel) {
+    return `${minLabel} - ${maxLabel} m2`;
+  }
+
+  if (minLabel || maxLabel) {
+    return `${minLabel ?? maxLabel} m2`;
+  }
+
+  return "A solicitud";
+}
+
+function formatPriceRange(min: number | null, max: number | null) {
+  const formatter = new Intl.NumberFormat("es-DO", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
+  if (min !== null && max !== null && min !== max) {
+    return `${formatter.format(min)} - ${formatter.format(max)}`;
+  }
+
+  if (min !== null || max !== null) {
+    return `Desde ${formatter.format(min ?? max ?? 0)}`;
+  }
+
+  return "Consultar";
+}
+
 export function ProjectShowcase({ project, properties }: ProjectShowcaseProps) {
   const [scrolled, setScrolled] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -154,6 +197,101 @@ export function ProjectShowcase({ project, properties }: ProjectShowcaseProps) {
       </section>
 
       {/* SECCIÓN DE INVENTARIO CON FILTROS ADAPTATIVOS STICKY */}
+      {project.inventorySummaries.length > 0 ? (
+        <section className="grid gap-8 border-t border-primary/5 pt-16">
+          <div className="flex flex-col gap-4 px-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.35em] text-primary/35">
+                Resumen comercial
+              </p>
+              <h2 className="m-0 font-serif text-[clamp(2rem,4vw,3.3rem)] italic leading-none tracking-[-0.03em] text-primary">
+                Rangos de villas y lotes.
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-6 text-primary/55">
+              Vista rapida por tipologia: tamano de lote, metraje habitable, precio y cantidad disponible.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-[2rem] border border-primary/10 bg-white shadow-xl shadow-primary/5">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] border-collapse text-left">
+                <thead className="bg-surface-soft/70 text-[10px] font-bold uppercase tracking-[0.22em] text-primary/40">
+                  <tr>
+                    <th className="px-7 py-5">Modelo</th>
+                    <th className="px-7 py-5">Lote</th>
+                    <th className="px-7 py-5">Habitabilidad</th>
+                    <th className="px-7 py-5">Precio</th>
+                    <th className="px-7 py-5 text-right">Disponibles</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5">
+                  {project.inventorySummaries.map((summary) => {
+                    const habitableLabel = formatNumber(summary.habitableAreaM2);
+                    const constructionLabel = formatNumber(summary.constructionAreaM2);
+                    const availabilityLabel =
+                      summary.totalLots > 0 && summary.totalLots !== summary.availableLots
+                        ? `${summary.availableLots} / ${summary.totalLots}`
+                        : `${summary.availableLots}`;
+
+                    return (
+                      <tr key={summary.id} className="transition-colors hover:bg-surface-soft/45">
+                        <td className="px-7 py-6 align-top">
+                          <div className="grid gap-2">
+                            <span className="font-serif text-xl italic leading-tight text-primary">
+                              {summary.modelName}
+                            </span>
+                            {summary.statusNote ? (
+                              <span className="text-xs leading-5 text-primary/45">{summary.statusNote}</span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-7 py-6 align-top text-sm font-semibold text-primary">
+                          {formatLotRange(summary.lotSizeMinM2, summary.lotSizeMaxM2)}
+                        </td>
+                        <td className="px-7 py-6 align-top">
+                          <div className="flex flex-wrap gap-2">
+                            {habitableLabel ? (
+                              <Badge variant="metric">{habitableLabel} m2 hab.</Badge>
+                            ) : null}
+                            {constructionLabel ? (
+                              <Badge variant="metric">{constructionLabel} m2 const.</Badge>
+                            ) : null}
+                            {summary.bedrooms ? (
+                              <Badge variant="chip" className="inline-flex items-center gap-1.5">
+                                <BedDouble className="h-3.5 w-3.5" />
+                                {summary.bedrooms}
+                              </Badge>
+                            ) : null}
+                            {summary.bathrooms ? (
+                              <Badge variant="chip" className="inline-flex items-center gap-1.5">
+                                <Bath className="h-3.5 w-3.5" />
+                                {formatNumber(summary.bathrooms)}
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-7 py-6 align-top text-sm font-bold text-primary">
+                          {formatPriceRange(summary.priceMin, summary.priceMax)}
+                        </td>
+                        <td className="px-7 py-6 align-top text-right">
+                          <span className="font-serif text-2xl italic leading-none text-primary">
+                            {availabilityLabel}
+                          </span>
+                          <span className="ml-2 text-[10px] font-bold uppercase tracking-widest text-primary/35">
+                            lotes
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section id="inventario" className="grid gap-12 pt-20 border-t border-primary/5 min-h-[100vh]" ref={filterRef}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
           <h2 className="m-0 font-serif text-[clamp(2.2rem,4vw,3.5rem)] leading-[1] tracking-[-0.03em] italic text-primary">

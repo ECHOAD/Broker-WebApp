@@ -6,7 +6,7 @@ type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 type PropertyMediaRow = Database["public"]["Tables"]["property_media"]["Row"];
 type PropertyTypeRow = Database["public"]["Tables"]["property_types"]["Row"];
 const PROPERTY_SELECT =
-  "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, custom_features, is_featured";
+  "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, price_min_amount, price_max_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, lot_area_min_m2, lot_area_max_m2, approximate_location_text, whatsapp_phone, custom_features, is_featured";
 const PROPERTY_SELECT_FALLBACK =
   "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, is_featured";
 
@@ -79,7 +79,15 @@ function formatAreaLabel(property: PropertyRow) {
     parts.push(`${formatAreaSquareMeters(property.construction_area_m2)} m² interiores`);
   }
 
-  if (property.lot_area_m2) {
+  if (property.lot_area_min_m2 || property.lot_area_max_m2) {
+    const min = property.lot_area_min_m2;
+    const max = property.lot_area_max_m2;
+    const lotRange =
+      min && max && min !== max
+        ? `${formatAreaSquareMeters(min)} - ${formatAreaSquareMeters(max)} m² lote`
+        : `${formatAreaSquareMeters(min ?? max ?? 0)} m² lote`;
+    parts.push(lotRange);
+  } else if (property.lot_area_m2) {
     parts.push(`${formatAreaSquareMeters(property.lot_area_m2)} m² lote`);
   }
 
@@ -113,7 +121,26 @@ function translateStatus(status: PropertyRow["commercial_status"]) {
 }
 
 function resolvePriceLabel(property: PropertyRow) {
-  if (property.price_mode === "on_request" || property.price_amount === null) {
+  if (property.price_mode === "on_request") {
+    return "Consultar precio";
+  }
+
+  if (property.price_mode === "range") {
+    const min = property.price_min_amount ?? property.price_amount;
+    const max = property.price_max_amount;
+
+    if (min !== null && max !== null && min !== max) {
+      return `${formatCurrency(min, property.base_currency)} - ${formatCurrency(max, property.base_currency)}`;
+    }
+
+    if (min !== null || max !== null) {
+      return `Desde ${formatCurrency(min ?? max ?? 0, property.base_currency)}`;
+    }
+
+    return "Consultar precio";
+  }
+
+  if (property.price_amount === null) {
     return "Consultar precio";
   }
 
@@ -182,7 +209,15 @@ function buildHighlights(
     highlights.push(`${formatAreaSquareMeters(property.construction_area_m2)} m² interiores`);
   }
 
-  if (property.lot_area_m2) {
+  if (property.lot_area_min_m2 || property.lot_area_max_m2) {
+    const min = property.lot_area_min_m2;
+    const max = property.lot_area_max_m2;
+    highlights.push(
+      min && max && min !== max
+        ? `${formatAreaSquareMeters(min)} - ${formatAreaSquareMeters(max)} m² de lote`
+        : `${formatAreaSquareMeters(min ?? max ?? 0)} m² de lote`,
+    );
+  } else if (property.lot_area_m2) {
     highlights.push(`${formatAreaSquareMeters(property.lot_area_m2)} m² de lote`);
   }
 
@@ -259,7 +294,7 @@ function mapPropertyRecord(
     status: translateStatus(property.commercial_status),
     location,
     priceLabel: resolvePriceLabel(property),
-    priceAmount: property.price_amount,
+    priceAmount: property.price_min_amount ?? property.price_amount,
     area: formatAreaLabel(property),
     pitch: summary,
     story: description,
@@ -528,6 +563,23 @@ export type ProjectDetailData = {
   logoUrl: string | null;
   propertyCount: number;
   isFeatured: boolean;
+  inventorySummaries: ProjectInventorySummaryData[];
+};
+
+export type ProjectInventorySummaryData = {
+  id: string;
+  modelName: string;
+  lotSizeMinM2: number | null;
+  lotSizeMaxM2: number | null;
+  habitableAreaM2: number | null;
+  constructionAreaM2: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  availableLots: number;
+  totalLots: number;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  statusNote: string | null;
 };
 
 const PROJECT_SELECT = `
@@ -542,7 +594,24 @@ const PROJECT_SELECT = `
   approximate_location_text,
   main_image_storage_path,
   logo_storage_path,
-  properties:properties(id)
+  properties:properties(id),
+  project_inventory_summaries(
+    id,
+    model_name,
+    lot_size_min_m2,
+    lot_size_max_m2,
+    habitable_area_m2,
+    construction_area_m2,
+    price_min,
+    price_max,
+    available_lots,
+    total_lots,
+    bedrooms,
+    bathrooms,
+    status_note,
+    sort_order,
+    is_active
+  )
 `;
 
 async function mapPublicProject(project: any): Promise<ProjectDetailData> {
@@ -569,6 +638,24 @@ async function mapPublicProject(project: any): Promise<ProjectDetailData> {
     logoUrl: logoData.publicUrl,
     propertyCount: project.properties?.length ?? 0,
     isFeatured: project.is_featured ?? false,
+    inventorySummaries: (project.project_inventory_summaries ?? [])
+      .filter((summary: any) => summary.is_active !== false)
+      .sort((left: any, right: any) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
+      .map((summary: any) => ({
+        id: summary.id,
+        modelName: summary.model_name,
+        lotSizeMinM2: summary.lot_size_min_m2,
+        lotSizeMaxM2: summary.lot_size_max_m2,
+        habitableAreaM2: summary.habitable_area_m2,
+        constructionAreaM2: summary.construction_area_m2,
+        priceMin: summary.price_min,
+        priceMax: summary.price_max,
+        availableLots: summary.available_lots,
+        totalLots: summary.total_lots,
+        bedrooms: summary.bedrooms,
+        bathrooms: summary.bathrooms,
+        statusNote: summary.status_note,
+      })),
   };
 }
 

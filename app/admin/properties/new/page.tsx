@@ -8,6 +8,7 @@ import { Database } from "@/lib/supabase/database.types";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type PropertyTypeRow = Database["public"]["Tables"]["property_types"]["Row"];
+type ProjectInventorySummaryRow = Database["public"]["Tables"]["project_inventory_summaries"]["Row"];
 
 type NewPropertyPageProps = {
   searchParams: Promise<{
@@ -29,22 +30,53 @@ export default async function NewPropertyPage({ searchParams }: NewPropertyPageP
     { data: project, error: projectError },
     { data: projectsData, error: projectsError },
     { data: propertyTypesData, error: propertyTypesError },
+    { data: inventorySummariesData, error: inventorySummariesError },
   ] = await Promise.all([
     supabase.from("projects").select("id, name, status").eq("id", projectParam).single(),
     supabase.from("projects").select("id, name, status").order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
     supabase.from("property_types").select("id, slug, label_es, label_en").order("label_es"),
+    supabase
+      .from("project_inventory_summaries")
+      .select(
+        "id, model_name, lot_size_min_m2, lot_size_max_m2, habitable_area_m2, construction_area_m2, price_min, price_max, available_lots, total_lots, bedrooms, bathrooms, status_note, sort_order, is_active",
+      )
+      .eq("project_id", projectParam)
+      .order("sort_order", { ascending: true }),
   ]);
 
   if (projectError || !project) {
     redirect("/admin/projects");
   }
 
-  if (projectsError || propertyTypesError) {
-    throw new Error(projectsError?.message ?? propertyTypesError?.message ?? "No pudimos cargar el formulario.");
+  if (projectsError || propertyTypesError || inventorySummariesError) {
+    throw new Error(
+      projectsError?.message ??
+        propertyTypesError?.message ??
+        inventorySummariesError?.message ??
+        "No pudimos cargar el formulario.",
+    );
   }
 
   const projects = (projectsData ?? []) as Array<Pick<ProjectRow, "id" | "name" | "status">>;
   const propertyTypes = (propertyTypesData ?? []) as Array<Pick<PropertyTypeRow, "id" | "slug" | "label_es" | "label_en">>;
+  const inventorySummaries = (inventorySummariesData ?? []) as Pick<
+    ProjectInventorySummaryRow,
+    | "id"
+    | "model_name"
+    | "lot_size_min_m2"
+    | "lot_size_max_m2"
+    | "habitable_area_m2"
+    | "construction_area_m2"
+    | "price_min"
+    | "price_max"
+    | "available_lots"
+    | "total_lots"
+    | "bedrooms"
+    | "bathrooms"
+    | "status_note"
+    | "sort_order"
+    | "is_active"
+  >[];
 
   return (
     <div className="space-y-6 pb-12">
@@ -73,6 +105,22 @@ export default async function NewPropertyPage({ searchParams }: NewPropertyPageP
         selectedProperty={null}
         selectedPropertySummary={null}
         projectOptions={projects.map((item) => ({ value: item.id, label: item.name }))}
+        inventorySummaryOptions={inventorySummaries.map((summary) => ({
+          id: summary.id,
+          modelName: summary.model_name,
+          lotSizeMinM2: summary.lot_size_min_m2,
+          lotSizeMaxM2: summary.lot_size_max_m2,
+          habitableAreaM2: summary.habitable_area_m2,
+          constructionAreaM2: summary.construction_area_m2,
+          priceMin: summary.price_min,
+          priceMax: summary.price_max,
+          availableLots: summary.available_lots,
+          totalLots: summary.total_lots,
+          bedrooms: summary.bedrooms,
+          bathrooms: summary.bathrooms,
+          statusNote: summary.status_note,
+          isActive: summary.is_active,
+        }))}
         propertyTypeOptions={propertyTypes.map((item) => ({ value: item.id, label: item.label_es, slug: item.slug }))}
         listingModeOptions={LISTING_MODE_OPTIONS}
         propertyStatusOptions={PROPERTY_STATUS_OPTIONS}

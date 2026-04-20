@@ -288,11 +288,16 @@ export type Database = {
           custom_features: Json;
           description: string | null;
           id: string;
+          inventory_summary_id: string | null;
           is_featured: boolean;
           listing_mode: Database["public"]["Enums"]["listing_mode"];
+          lot_area_max_m2: number | null;
+          lot_area_min_m2: number | null;
           lot_area_m2: number | null;
           parking_spaces: number | null;
           price_amount: number | null;
+          price_max_amount: number | null;
+          price_min_amount: number | null;
           price_mode: Database["public"]["Enums"]["price_mode"];
           project_id: string | null;
           property_type_id: string;
@@ -316,11 +321,16 @@ export type Database = {
           custom_features?: Json;
           description?: string | null;
           id?: string;
+          inventory_summary_id?: string | null;
           is_featured?: boolean;
           listing_mode: Database["public"]["Enums"]["listing_mode"];
+          lot_area_max_m2?: number | null;
+          lot_area_min_m2?: number | null;
           lot_area_m2?: number | null;
           parking_spaces?: number | null;
           price_amount?: number | null;
+          price_max_amount?: number | null;
+          price_min_amount?: number | null;
           price_mode?: Database["public"]["Enums"]["price_mode"];
           project_id?: string | null;
           property_type_id: string;
@@ -344,11 +354,16 @@ export type Database = {
           custom_features?: Json;
           description?: string | null;
           id?: string;
+          inventory_summary_id?: string | null;
           is_featured?: boolean;
           listing_mode?: Database["public"]["Enums"]["listing_mode"];
+          lot_area_max_m2?: number | null;
+          lot_area_min_m2?: number | null;
           lot_area_m2?: number | null;
           parking_spaces?: number | null;
           price_amount?: number | null;
+          price_max_amount?: number | null;
+          price_min_amount?: number | null;
           price_mode?: Database["public"]["Enums"]["price_mode"];
           project_id?: string | null;
           property_type_id?: string;
@@ -377,6 +392,12 @@ export type Database = {
             foreignKeyName: "properties_property_type_id_fkey";
             columns: ["property_type_id"];
             referencedRelation: "property_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "properties_inventory_summary_id_fkey";
+            columns: ["inventory_summary_id"];
+            referencedRelation: "project_inventory_summaries";
             referencedColumns: ["id"];
           }
         ];
@@ -422,6 +443,76 @@ export type Database = {
           width?: number | null;
         };
         Relationships: [];
+      };
+      project_inventory_summaries: {
+        Row: {
+          available_lots: number;
+          bathrooms: number | null;
+          bedrooms: number | null;
+          construction_area_m2: number | null;
+          created_at: string;
+          habitable_area_m2: number | null;
+          id: string;
+          is_active: boolean;
+          lot_size_max_m2: number | null;
+          lot_size_min_m2: number | null;
+          model_name: string;
+          price_max: number | null;
+          price_min: number | null;
+          project_id: string;
+          sort_order: number;
+          status_note: string | null;
+          total_lots: number;
+          updated_at: string;
+        };
+        Insert: {
+          available_lots?: number;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          construction_area_m2?: number | null;
+          created_at?: string;
+          habitable_area_m2?: number | null;
+          id?: string;
+          is_active?: boolean;
+          lot_size_max_m2?: number | null;
+          lot_size_min_m2?: number | null;
+          model_name: string;
+          price_max?: number | null;
+          price_min?: number | null;
+          project_id: string;
+          sort_order?: number;
+          status_note?: string | null;
+          total_lots?: number;
+          updated_at?: string;
+        };
+        Update: {
+          available_lots?: number;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          construction_area_m2?: number | null;
+          created_at?: string;
+          habitable_area_m2?: number | null;
+          id?: string;
+          is_active?: boolean;
+          lot_size_max_m2?: number | null;
+          lot_size_min_m2?: number | null;
+          model_name?: string;
+          price_max?: number | null;
+          price_min?: number | null;
+          project_id?: string;
+          sort_order?: number;
+          status_note?: string | null;
+          total_lots?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_inventory_summaries_project_id_fkey";
+            columns: ["project_id"];
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       property_types: {
         Row: {
@@ -478,7 +569,7 @@ export type Database = {
         | "closed_lost"
         | "archived";
       listing_mode: "sale" | "rent" | "sale_rent";
-      price_mode: "fixed" | "on_request";
+      price_mode: "fixed" | "range" | "on_request";
       project_status: "draft" | "published" | "archived";
       property_status: "available" | "reserved" | "sold" | "rented" | "hidden";
     };

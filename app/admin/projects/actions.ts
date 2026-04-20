@@ -3,12 +3,119 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireBrokerAdmin } from "@/lib/auth";
-import { slugify, toNullableText, toNullableInteger } from "@/lib/admin";
+import { slugify, toNullableText, toNullableInteger, toNullableNumeric } from "@/lib/admin";
 import { Database } from "@/lib/supabase/database.types";
 
 type ProjectStatus = Database["public"]["Enums"]["project_status"];
 
 const ALLOWED_PROJECT_STATUSES: ProjectStatus[] = ["draft", "published", "archived"];
+
+const toNonNegativeNumber = (value: unknown) => {
+  const parsed = toNullableNumeric(String(value ?? ""));
+  return parsed === null ? null : Math.max(0, parsed);
+};
+
+const normalizeRange = (min: number | null, max: number | null) => {
+  if (min === null && max === null) {
+    return { min: null, max: null };
+  }
+
+  const normalizedMin = min ?? max;
+  const normalizedMax = max ?? min;
+
+  if (normalizedMin === null || normalizedMax === null) {
+    return { min: normalizedMin, max: normalizedMax };
+  }
+
+  return {
+    min: Math.min(normalizedMin, normalizedMax),
+    max: Math.max(normalizedMin, normalizedMax),
+  };
+};
+
+const normalizeInventorySummaries = (value: FormDataEntryValue | null) => {
+  if (typeof value !== "string" || !value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item, index) => {
+        const modelName = typeof item?.modelName === "string" ? item.modelName.trim() : "";
+        if (!modelName) {
+          return null;
+        }
+
+        const availableInput = Math.max(0, Number.parseInt(String(item?.availableLots ?? 0), 10) || 0);
+        const totalInput = Math.max(0, Number.parseInt(String(item?.totalLots ?? 0), 10) || 0);
+        const totalLots = Math.max(totalInput, availableInput);
+        const availableLots = Math.min(totalLots, availableInput);
+        const lotRange = normalizeRange(
+          toNonNegativeNumber(item?.lotSizeMinM2),
+          toNonNegativeNumber(item?.lotSizeMaxM2),
+        );
+        const priceRange = normalizeRange(
+          toNonNegativeNumber(item?.priceMin),
+          toNonNegativeNumber(item?.priceMax),
+        );
+
+        return {
+          model_name: modelName,
+          lot_size_min_m2: lotRange.min,
+          lot_size_max_m2: lotRange.max,
+          habitable_area_m2: toNonNegativeNumber(item?.habitableAreaM2),
+          construction_area_m2: toNonNegativeNumber(item?.constructionAreaM2),
+          price_min: priceRange.min,
+          price_max: priceRange.max,
+          available_lots: availableLots,
+          total_lots: totalLots,
+          bedrooms: toNullableInteger(String(item?.bedrooms ?? "")),
+          bathrooms: toNullableNumeric(String(item?.bathrooms ?? "")),
+          status_note: toNullableText(String(item?.statusNote ?? "")),
+          sort_order: toNullableInteger(String(item?.sortOrder ?? "")) ?? index,
+          is_active: item?.isActive !== false,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  } catch {
+    return [];
+  }
+};
+
+async function replaceProjectInventorySummaries(
+  supabase: Awaited<ReturnType<typeof requireBrokerAdmin>>["supabase"],
+  projectId: string,
+  inventorySummaries: ReturnType<typeof normalizeInventorySummaries>,
+) {
+  const { error: deleteError } = await supabase
+    .from("project_inventory_summaries")
+    .delete()
+    .eq("project_id", projectId);
+
+  if (deleteError) {
+    throw new Error(deleteError.message);
+  }
+
+  if (inventorySummaries.length === 0) {
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("project_inventory_summaries").insert(
+    inventorySummaries.map((summary) => ({
+      ...summary,
+      project_id: projectId,
+    })),
+  );
+
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+}
 
 export async function upsertProject(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "").trim();
@@ -23,6 +130,7 @@ export async function upsertProject(formData: FormData) {
   const approximateLocationText = toNullableText(formData.get("approximateLocationText"));
   const locationId = toNullableText(formData.get("locationId"));
   const sortOrder = toNullableInteger(formData.get("sortOrder")) ?? 0;
+  const inventorySummaries = normalizeInventorySummaries(formData.get("inventorySummariesJson"));
 
   // Files for unified flow
   const mainImageFile = formData.get("mainImageFile") as File | null;
@@ -61,6 +169,7 @@ export async function upsertProject(formData: FormData) {
   }
 
   const finalProjectId = data.id;
+  await replaceProjectInventorySummaries(supabase, finalProjectId, inventorySummaries);
   let updatesAfterUpload: any = {};
 
   // Handle Main Image if provided in unified form

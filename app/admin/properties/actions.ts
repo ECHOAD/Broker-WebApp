@@ -12,7 +12,7 @@ type PropertyStatus = Database["public"]["Enums"]["property_status"];
 type Json = Database["public"]["Tables"]["properties"]["Insert"]["custom_features"];
 
 const ALLOWED_LISTING_MODES: ListingMode[] = ["sale", "rent", "sale_rent"];
-const ALLOWED_PRICE_MODES: PriceMode[] = ["fixed", "on_request"];
+const ALLOWED_PRICE_MODES: PriceMode[] = ["fixed", "range", "on_request"];
 const ALLOWED_PROPERTY_STATUSES: PropertyStatus[] = ["available", "reserved", "sold", "rented", "hidden"];
 
 const adminPropertiesPath = (projectId: string | null) => {
@@ -35,6 +35,85 @@ const adminPropertyFormPath = (projectId: string | null, propertyId?: string) =>
 
 const getFilesFromFormData = (formData: FormData, key: string) =>
   formData.getAll(key).filter((value): value is File => value instanceof File && value.size > 0);
+
+const toNonNegativeNumeric = (value: FormDataEntryValue | null) => {
+  const parsed = toNullableNumeric(value);
+  return parsed === null ? null : Math.max(0, parsed);
+};
+
+const normalizeRange = (min: number | null, max: number | null) => {
+  if (min === null && max === null) {
+    return { min: null, max: null };
+  }
+
+  const normalizedMin = min ?? max;
+  const normalizedMax = max ?? min;
+
+  if (normalizedMin === null || normalizedMax === null) {
+    return { min: normalizedMin, max: normalizedMax };
+  }
+
+  return {
+    min: Math.min(normalizedMin, normalizedMax),
+    max: Math.max(normalizedMin, normalizedMax),
+  };
+};
+
+const normalizePricePayload = ({
+  priceMode,
+  fixedAmount,
+  rangeMin,
+  rangeMax,
+}: {
+  priceMode: PriceMode;
+  fixedAmount: number | null;
+  rangeMin: number | null;
+  rangeMax: number | null;
+}) => {
+  if (priceMode === "on_request") {
+    return {
+      price_mode: "on_request" as PriceMode,
+      price_amount: null,
+      price_min_amount: null,
+      price_max_amount: null,
+    };
+  }
+
+  if (priceMode === "fixed") {
+    if (fixedAmount === null) {
+      return {
+        price_mode: "on_request" as PriceMode,
+        price_amount: null,
+        price_min_amount: null,
+        price_max_amount: null,
+      };
+    }
+
+    return {
+      price_mode: "fixed" as PriceMode,
+      price_amount: fixedAmount,
+      price_min_amount: fixedAmount,
+      price_max_amount: fixedAmount,
+    };
+  }
+
+  const normalizedRange = normalizeRange(rangeMin ?? fixedAmount, rangeMax);
+  if (normalizedRange.min === null) {
+    return {
+      price_mode: "on_request" as PriceMode,
+      price_amount: null,
+      price_min_amount: null,
+      price_max_amount: null,
+    };
+  }
+
+  return {
+    price_mode: "range" as PriceMode,
+    price_amount: normalizedRange.min,
+    price_min_amount: normalizedRange.min,
+    price_max_amount: normalizedRange.max,
+  };
+};
 
 const normalizeCustomFeatures = (value: FormDataEntryValue | null): Json => {
   if (typeof value !== "string" || !value.trim()) {
@@ -60,6 +139,33 @@ const normalizeCustomFeatures = (value: FormDataEntryValue | null): Json => {
     return [];
   }
 };
+
+async function resolveInventorySummaryId({
+  supabase,
+  projectId,
+  inventorySummaryId,
+}: {
+  supabase: Awaited<ReturnType<typeof requireBrokerAdmin>>["supabase"];
+  projectId: string;
+  inventorySummaryId: string | null;
+}) {
+  if (!inventorySummaryId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("project_inventory_summaries")
+    .select("id")
+    .eq("id", inventorySummaryId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.id ?? null;
+}
 
 async function getPropertyMediaCount(supabase: Awaited<ReturnType<typeof requireBrokerAdmin>>["supabase"], propertyId: string) {
   const { count, error } = await supabase
@@ -159,12 +265,17 @@ async function savePropertyRecord(formData: FormData) {
   const commercialStatus = String(formData.get("commercialStatus") ?? "available").trim() as PropertyStatus;
   const priceMode = String(formData.get("priceMode") ?? "fixed").trim() as PriceMode;
   const baseCurrency = String(formData.get("baseCurrency") ?? "USD").trim().toUpperCase();
-  const priceAmount = toNullableNumeric(formData.get("priceAmount"));
+  const priceAmount = toNonNegativeNumeric(formData.get("priceAmount"));
+  const priceMinAmount = toNonNegativeNumeric(formData.get("priceMinAmount"));
+  const priceMaxAmount = toNonNegativeNumeric(formData.get("priceMaxAmount"));
   const bedrooms = toNullableInteger(formData.get("bedrooms"));
   const bathrooms = toNullableInteger(formData.get("bathrooms"));
   const parkingSpaces = toNullableInteger(formData.get("parkingSpaces"));
-  const constructionArea = toNullableNumeric(formData.get("constructionAreaM2"));
-  const lotArea = toNullableNumeric(formData.get("lotAreaM2"));
+  const constructionArea = toNonNegativeNumeric(formData.get("constructionAreaM2"));
+  const lotArea = toNonNegativeNumeric(formData.get("lotAreaM2"));
+  const lotAreaMin = toNonNegativeNumeric(formData.get("lotAreaMinM2"));
+  const lotAreaMax = toNonNegativeNumeric(formData.get("lotAreaMaxM2"));
+  const inventorySummaryId = toNullableText(formData.get("inventorySummaryId"));
   const isFeatured = formData.get("isFeatured") === "on";
   const summary = toNullableText(formData.get("summary"));
   const description = toNullableText(formData.get("description"));
@@ -185,8 +296,21 @@ async function savePropertyRecord(formData: FormData) {
 
   const slug = slugify(slugInput || title);
   const { supabase, user } = await requireBrokerAdmin();
+  const resolvedInventorySummaryId = await resolveInventorySummaryId({
+    supabase,
+    projectId,
+    inventorySummaryId,
+  });
+  const normalizedPrice = normalizePricePayload({
+    priceMode,
+    fixedAmount: priceAmount,
+    rangeMin: priceMinAmount,
+    rangeMax: priceMaxAmount,
+  });
+  const normalizedLotArea = normalizeRange(lotAreaMin ?? lotArea, lotAreaMax);
   const payload = {
     project_id: projectId,
+    inventory_summary_id: resolvedInventorySummaryId,
     property_type_id: propertyTypeId,
     slug,
     title,
@@ -194,14 +318,18 @@ async function savePropertyRecord(formData: FormData) {
     description,
     listing_mode: listingMode,
     commercial_status: commercialStatus,
-    price_mode: priceMode,
+    price_mode: normalizedPrice.price_mode,
     base_currency: baseCurrency || "USD",
-    price_amount: priceMode === "fixed" ? priceAmount : null,
+    price_amount: normalizedPrice.price_amount,
+    price_min_amount: normalizedPrice.price_min_amount,
+    price_max_amount: normalizedPrice.price_max_amount,
     bedrooms,
     bathrooms,
     parking_spaces: parkingSpaces,
     construction_area_m2: constructionArea,
-    lot_area_m2: lotArea,
+    lot_area_m2: lotArea ?? normalizedLotArea.min,
+    lot_area_min_m2: normalizedLotArea.min,
+    lot_area_max_m2: normalizedLotArea.max,
     approximate_location_text: approximateLocationText,
     whatsapp_phone: whatsappPhone,
     custom_features: customFeatures,
@@ -233,12 +361,17 @@ export async function upsertProperty(formData: FormData) {
   const commercialStatus = String(formData.get("commercialStatus") ?? "available").trim() as PropertyStatus;
   const priceMode = String(formData.get("priceMode") ?? "fixed").trim() as PriceMode;
   const baseCurrency = String(formData.get("baseCurrency") ?? "USD").trim().toUpperCase();
-  const priceAmount = toNullableNumeric(formData.get("priceAmount"));
+  const priceAmount = toNonNegativeNumeric(formData.get("priceAmount"));
+  const priceMinAmount = toNonNegativeNumeric(formData.get("priceMinAmount"));
+  const priceMaxAmount = toNonNegativeNumeric(formData.get("priceMaxAmount"));
   const bedrooms = toNullableInteger(formData.get("bedrooms"));
   const bathrooms = toNullableInteger(formData.get("bathrooms"));
   const parkingSpaces = toNullableInteger(formData.get("parkingSpaces"));
-  const constructionArea = toNullableNumeric(formData.get("constructionAreaM2"));
-  const lotArea = toNullableNumeric(formData.get("lotAreaM2"));
+  const constructionArea = toNonNegativeNumeric(formData.get("constructionAreaM2"));
+  const lotArea = toNonNegativeNumeric(formData.get("lotAreaM2"));
+  const lotAreaMin = toNonNegativeNumeric(formData.get("lotAreaMinM2"));
+  const lotAreaMax = toNonNegativeNumeric(formData.get("lotAreaMaxM2"));
+  const inventorySummaryId = toNullableText(formData.get("inventorySummaryId"));
   const isFeatured = formData.get("isFeatured") === "on";
   const summary = toNullableText(formData.get("summary"));
   const description = toNullableText(formData.get("description"));
@@ -260,8 +393,21 @@ export async function upsertProperty(formData: FormData) {
 
   const slug = slugify(slugInput || title);
   const { supabase, user } = await requireBrokerAdmin();
+  const resolvedInventorySummaryId = await resolveInventorySummaryId({
+    supabase,
+    projectId,
+    inventorySummaryId,
+  });
+  const normalizedPrice = normalizePricePayload({
+    priceMode,
+    fixedAmount: priceAmount,
+    rangeMin: priceMinAmount,
+    rangeMax: priceMaxAmount,
+  });
+  const normalizedLotArea = normalizeRange(lotAreaMin ?? lotArea, lotAreaMax);
   const payload = {
     project_id: projectId,
+    inventory_summary_id: resolvedInventorySummaryId,
     property_type_id: propertyTypeId,
     slug,
     title,
@@ -269,14 +415,18 @@ export async function upsertProperty(formData: FormData) {
     description,
     listing_mode: listingMode,
     commercial_status: commercialStatus,
-    price_mode: priceMode,
+    price_mode: normalizedPrice.price_mode,
     base_currency: baseCurrency || "USD",
-    price_amount: priceMode === "fixed" ? priceAmount : null,
+    price_amount: normalizedPrice.price_amount,
+    price_min_amount: normalizedPrice.price_min_amount,
+    price_max_amount: normalizedPrice.price_max_amount,
     bedrooms,
     bathrooms,
     parking_spaces: parkingSpaces,
     construction_area_m2: constructionArea,
-    lot_area_m2: lotArea,
+    lot_area_m2: lotArea ?? normalizedLotArea.min,
+    lot_area_min_m2: normalizedLotArea.min,
+    lot_area_max_m2: normalizedLotArea.max,
     approximate_location_text: approximateLocationText,
     whatsapp_phone: whatsappPhone,
     custom_features: customFeatures,

@@ -95,6 +95,7 @@ export const LISTING_MODE_OPTIONS = Object.entries(LISTING_MODE_LABELS).map(([va
 
 export const PRICE_MODE_LABELS: Record<PriceMode, string> = {
   fixed: "Precio fijo",
+  range: "Rango de precio",
   on_request: "A consultar",
 };
 
@@ -152,6 +153,14 @@ export function formatLeadDate(value: string) {
 export function formatCurrency(amount: number | null, currency: string, priceMode: PriceMode) {
   if (priceMode === "on_request" || amount === null) {
     return "Precio a solicitud";
+  }
+
+  if (priceMode === "range") {
+    return `Desde ${new Intl.NumberFormat("es-DO", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: amount >= 1000000 ? 2 : 0,
+    }).format(amount)}`;
   }
 
   return new Intl.NumberFormat("es-DO", {

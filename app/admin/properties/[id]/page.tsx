@@ -15,10 +15,12 @@ import { Database } from "@/lib/supabase/database.types";
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 type PropertyTypeRow = Database["public"]["Tables"]["property_types"]["Row"];
+type ProjectInventorySummaryRow = Database["public"]["Tables"]["project_inventory_summaries"]["Row"];
 
 type PropertyWithMedia = Pick<
   PropertyRow,
   | "id"
+  | "inventory_summary_id"
   | "project_id"
   | "property_type_id"
   | "slug"
@@ -30,11 +32,15 @@ type PropertyWithMedia = Pick<
   | "price_mode"
   | "base_currency"
   | "price_amount"
+  | "price_min_amount"
+  | "price_max_amount"
   | "bedrooms"
   | "bathrooms"
   | "parking_spaces"
   | "construction_area_m2"
   | "lot_area_m2"
+  | "lot_area_min_m2"
+  | "lot_area_max_m2"
   | "approximate_location_text"
   | "whatsapp_phone"
   | "custom_features"
@@ -87,7 +93,7 @@ export default async function PropertyEditPage({ params, searchParams }: Propert
     supabase
       .from("properties")
       .select(
-        "id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, approximate_location_text, whatsapp_phone, custom_features, is_featured, published_at, property_media(id, storage_path, is_cover)",
+        "id, inventory_summary_id, project_id, property_type_id, slug, title, summary, description, listing_mode, commercial_status, price_mode, base_currency, price_amount, price_min_amount, price_max_amount, bedrooms, bathrooms, parking_spaces, construction_area_m2, lot_area_m2, lot_area_min_m2, lot_area_max_m2, approximate_location_text, whatsapp_phone, custom_features, is_featured, published_at, property_media(id, storage_path, is_cover)",
       )
       .eq("id", id)
       .single(),
@@ -117,8 +123,40 @@ export default async function PropertyEditPage({ params, searchParams }: Propert
     redirect("/admin/projects");
   }
 
+  const { data: inventorySummariesData, error: inventorySummariesError } = await supabase
+    .from("project_inventory_summaries")
+    .select(
+      "id, model_name, lot_size_min_m2, lot_size_max_m2, habitable_area_m2, construction_area_m2, price_min, price_max, available_lots, total_lots, bedrooms, bathrooms, status_note, sort_order, is_active",
+    )
+    .eq("project_id", project.id)
+    .order("sort_order", { ascending: true });
+
+  if (inventorySummariesError) {
+    throw new Error(inventorySummariesError.message);
+  }
+
+  const inventorySummaries = (inventorySummariesData ?? []) as Pick<
+    ProjectInventorySummaryRow,
+    | "id"
+    | "model_name"
+    | "lot_size_min_m2"
+    | "lot_size_max_m2"
+    | "habitable_area_m2"
+    | "construction_area_m2"
+    | "price_min"
+    | "price_max"
+    | "available_lots"
+    | "total_lots"
+    | "bedrooms"
+    | "bathrooms"
+    | "status_note"
+    | "sort_order"
+    | "is_active"
+  >[];
+
   const selectedProperty = {
     id: property.id,
+    inventorySummaryId: property.inventory_summary_id,
     title: property.title,
     slug: property.slug,
     projectId: property.project_id,
@@ -128,12 +166,16 @@ export default async function PropertyEditPage({ params, searchParams }: Propert
     priceMode: property.price_mode,
     baseCurrency: property.base_currency,
     priceAmount: property.price_amount,
+    priceMinAmount: property.price_min_amount,
+    priceMaxAmount: property.price_max_amount,
     whatsappPhone: property.whatsapp_phone,
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
     parkingSpaces: property.parking_spaces,
     constructionAreaM2: property.construction_area_m2,
     lotAreaM2: property.lot_area_m2,
+    lotAreaMinM2: property.lot_area_min_m2,
+    lotAreaMaxM2: property.lot_area_max_m2,
     approximateLocationText: property.approximate_location_text,
     summary: property.summary,
     description: property.description,
@@ -178,6 +220,22 @@ export default async function PropertyEditPage({ params, searchParams }: Propert
         selectedProperty={selectedProperty}
         selectedPropertySummary={selectedPropertySummary}
         projectOptions={projects.map((item) => ({ value: item.id, label: item.name }))}
+        inventorySummaryOptions={inventorySummaries.map((summary) => ({
+          id: summary.id,
+          modelName: summary.model_name,
+          lotSizeMinM2: summary.lot_size_min_m2,
+          lotSizeMaxM2: summary.lot_size_max_m2,
+          habitableAreaM2: summary.habitable_area_m2,
+          constructionAreaM2: summary.construction_area_m2,
+          priceMin: summary.price_min,
+          priceMax: summary.price_max,
+          availableLots: summary.available_lots,
+          totalLots: summary.total_lots,
+          bedrooms: summary.bedrooms,
+          bathrooms: summary.bathrooms,
+          statusNote: summary.status_note,
+          isActive: summary.is_active,
+        }))}
         propertyTypeOptions={propertyTypes.map((item) => ({ value: item.id, label: item.label_es, slug: item.slug }))}
         listingModeOptions={LISTING_MODE_OPTIONS}
         propertyStatusOptions={PROPERTY_STATUS_OPTIONS}

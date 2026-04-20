@@ -55,7 +55,26 @@ type SelectedProject = {
   isFeatured: boolean;
   logoStoragePath: string | null;
   mainImageStoragePath: string | null;
+  inventorySummaries: InventorySummary[];
 } | null;
+
+type InventorySummary = {
+  id: string;
+  modelName: string;
+  lotSizeMinM2: number | string | null;
+  lotSizeMaxM2: number | string | null;
+  habitableAreaM2: number | string | null;
+  constructionAreaM2: number | string | null;
+  priceMin: number | string | null;
+  priceMax: number | string | null;
+  availableLots: number | string;
+  totalLots: number | string;
+  bedrooms: number | string | null;
+  bathrooms: number | string | null;
+  statusNote: string | null;
+  sortOrder: number | string;
+  isActive: boolean;
+};
 
 type ProjectEditorProps = {
   selectedLeadId: string | null;
@@ -79,6 +98,11 @@ export function ProjectEditor({
   // State for unified flow
   const [pendingMainImage, setPendingMainImage] = useState<File | null>(null);
   const [pendingLogo, setPendingLogo] = useState<File | null>(null);
+  const [inventorySummaries, setInventorySummaries] = useState<InventorySummary[]>(
+    selectedProject?.inventorySummaries?.length
+      ? selectedProject.inventorySummaries
+      : [],
+  );
 
   if (!currentProjectId) {
     return (
@@ -96,12 +120,46 @@ export function ProjectEditor({
 
   const isNew = currentProjectId === "new";
   const locationOptions = locations.map(l => ({ value: l.id, label: l.name }));
+  const inventorySummariesJson = JSON.stringify(inventorySummaries);
 
   const simpleStatusOptions = [
     { value: 'draft', label: 'Borrador (Solo tú lo ves)' },
     { value: 'published', label: 'Público (Cualquiera puede verlo)' },
     { value: 'archived', label: 'Oculto / Archivado' },
   ];
+
+  const addInventorySummary = () => {
+    setInventorySummaries((items) => [
+      ...items,
+      {
+        id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        modelName: "",
+        lotSizeMinM2: null,
+        lotSizeMaxM2: null,
+        habitableAreaM2: null,
+        constructionAreaM2: null,
+        priceMin: null,
+        priceMax: null,
+        availableLots: 0,
+        totalLots: 0,
+        bedrooms: null,
+        bathrooms: null,
+        statusNote: "",
+        sortOrder: items.length,
+        isActive: true,
+      },
+    ]);
+  };
+
+  const updateInventorySummary = (id: string, field: keyof InventorySummary, value: string | number | boolean | null) => {
+    setInventorySummaries((items) =>
+      items.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
+  };
+
+  const removeInventorySummary = (id: string) => {
+    setInventorySummaries((items) => items.filter((item) => item.id !== id));
+  };
 
   return (
     <form action={upsertProject} className="space-y-8">
@@ -110,6 +168,7 @@ export function ProjectEditor({
       <input name="selectedProjectId" type="hidden" value={currentProjectId ?? "new"} />
       <input name="selectedPropertyId" type="hidden" value={currentPropertyId ?? ""} />
       <input name="locationId" type="hidden" value={selectedLocationId} />
+      <input name="inventorySummariesJson" type="hidden" value={inventorySummariesJson} />
 
       {/* HIDDEN FILE INPUTS */}
       <input type="file" name="mainImageFile" className="hidden" id="main-image-hidden-input" onChange={(e) => setPendingMainImage(e.target.files?.[0] ?? null)} />
@@ -282,6 +341,175 @@ export function ProjectEditor({
             <FormField label="Historia y Detalles" hint="Cuerpo completo del texto.">
               <Textarea defaultValue={selectedProject?.description ?? ""} name="description" className="min-h-[400px]" placeholder="Detalla amenidades, historia, etc..." />
             </FormField>
+          </section>
+
+          <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm space-y-8">
+            <div className="flex flex-col gap-4 border-b border-slate-50 pb-6 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-800 flex items-center justify-center font-bold text-sm">4</span>
+                  <h3 className="font-serif text-2xl text-slate-900 m-0">Resumen de inventario</h3>
+                </div>
+                <p className="text-sm text-slate-500 pl-11">
+                  Para modelos repetidos: rango de m2, precio y cantidad de lotes disponibles sin crear cada unidad.
+                </p>
+              </div>
+              <Button
+                className="border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-950 rounded-[1.5rem] h-12 px-6 font-bold uppercase tracking-widest text-[11px]"
+                onClick={addInventorySummary}
+                type="button"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar modelo
+              </Button>
+            </div>
+
+            {inventorySummaries.length === 0 ? (
+              <EmptyState
+                eyebrow="Inventario"
+                title="Sin resumen de inventario"
+                description="Agrega modelos como Villa Los Tres Angeles para mostrar rangos de lote, precio y disponibilidad."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {inventorySummaries.map((item, index) => (
+                  <div key={item.id} className="rounded-[2rem] border border-slate-100 bg-slate-50/60 p-5">
+                    <div className="mb-5 flex items-center justify-between gap-4">
+                      <p className="m-0 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                        Modelo {index + 1}
+                      </p>
+                      <button
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-900"
+                        onClick={() => removeInventorySummary(item.id)}
+                        type="button"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <FormField label="Modelo / tipologia" hint="Ej: Villa Los Tres Angeles">
+                        <Input
+                          value={item.modelName}
+                          onChange={(event) => updateInventorySummary(item.id, "modelName", event.target.value)}
+                          placeholder="Villa Los Tres Angeles"
+                        />
+                      </FormField>
+                      <FormField label="Nota de estado" hint="Opcional: entrega, etapa o comentario">
+                        <Input
+                          value={item.statusNote ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "statusNote", event.target.value)}
+                          placeholder="Etapa 1 disponible"
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                      <FormField label="Lote desde m2">
+                        <Input
+                          value={item.lotSizeMinM2 ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "lotSizeMinM2", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                      <FormField label="Lote hasta m2">
+                        <Input
+                          value={item.lotSizeMaxM2 ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "lotSizeMaxM2", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                      <FormField label="Area habitable m2">
+                        <Input
+                          value={item.habitableAreaM2 ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "habitableAreaM2", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                      <FormField label="Area construida m2">
+                        <Input
+                          value={item.constructionAreaM2 ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "constructionAreaM2", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                      <FormField label="Precio desde">
+                        <Input
+                          value={item.priceMin ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "priceMin", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                      <FormField label="Precio hasta">
+                        <Input
+                          value={item.priceMax ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "priceMax", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                        />
+                      </FormField>
+                      <FormField label="Disponibles">
+                        <Input
+                          value={item.availableLots}
+                          onChange={(event) => updateInventorySummary(item.id, "availableLots", event.target.value)}
+                          type="number"
+                          min="0"
+                        />
+                      </FormField>
+                      <FormField label="Total lotes">
+                        <Input
+                          value={item.totalLots}
+                          onChange={(event) => updateInventorySummary(item.id, "totalLots", event.target.value)}
+                          type="number"
+                          min="0"
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="mt-5 grid gap-5 md:grid-cols-3">
+                      <FormField label="Habitaciones">
+                        <Input
+                          value={item.bedrooms ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "bedrooms", event.target.value)}
+                          type="number"
+                          min="0"
+                        />
+                      </FormField>
+                      <FormField label="Banos">
+                        <Input
+                          value={item.bathrooms ?? ""}
+                          onChange={(event) => updateInventorySummary(item.id, "bathrooms", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.5"
+                        />
+                      </FormField>
+                      <FormField label="Orden">
+                        <Input
+                          value={item.sortOrder}
+                          onChange={(event) => updateInventorySummary(item.id, "sortOrder", event.target.value)}
+                          type="number"
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 

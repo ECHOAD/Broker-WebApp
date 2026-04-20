@@ -18,3 +18,6 @@ enabled = true
 [mcp_servers.supabase.tools.execute_sql]
 approval_mode = "approve"
 
+[mcp_servers.supabase.tools.apply_migration]
+approval_mode = "approve"
+
