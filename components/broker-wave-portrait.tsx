@@ -66,7 +66,7 @@ export function BrokerWavePortrait({
 
       <div className="broker-photo-shape__blob">
         <img
-          alt="Carlos Realto"
+          alt="Carlos Realtor"
           className="broker-photo-shape__photo"
           src={imageSrc}
         />

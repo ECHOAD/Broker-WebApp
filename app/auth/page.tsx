@@ -83,7 +83,7 @@ export default function AuthPage() {
               <>
                 {authState.step === 1 && "Comience definiendo su perfil de inversión para recibir oportunidades alineadas con sus objetivos."}
                 {authState.step === 2 && "Compartanos sus datos de contacto para establecer un canal de comunicación directo y profesional."}
-                {authState.step === 3 && "Configure sus credenciales de acceso para entrar al círculo exclusivo de Carlos Realto."}
+                {authState.step === 3 && "Configure sus credenciales de acceso para entrar al círculo exclusivo de Carlos Realtor."}
               </>
             )}
           </p>

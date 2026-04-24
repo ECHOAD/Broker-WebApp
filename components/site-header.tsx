@@ -94,7 +94,7 @@ export function SiteHeader() {
             <Link className="brand-lockup group" href="/">
               <span className="brand-lockup__eyebrow transition-colors group-hover:text-primary">Carlos Morla</span>
               <span className="brand-lockup__name">
-                <span className="brand-lockup__name-main">Realto</span>
+                <span className="brand-lockup__name-main">Realtor</span>
                 <span className="brand-lockup__name-dot animate-pulse" />
                 <span className="brand-lockup__name-accent italic font-serif lowercase tracking-normal text-primary/40">estates</span>
               </span>

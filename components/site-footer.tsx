@@ -55,7 +55,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-24 pt-8 flex flex-col md:flex-row justify-between items-end gap-4 border-t border-primary/[0.05]">
-          <p className="text-[9px] eyebrow opacity-20 m-0">© {currentYear} Realto Estates · Todos los derechos reservados</p>
+          <p className="text-[9px] eyebrow opacity-20 m-0">© {currentYear} Realtor Estates · Todos los derechos reservados</p>
 
         </div>
       </div>

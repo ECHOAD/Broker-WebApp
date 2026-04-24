@@ -20,7 +20,7 @@ Required in `.env.local`:
 
 ## Architecture
 
-**Carlos Realto** is a premium real estate broker webapp for the Dominican Republic market. UI language is Spanish throughout.
+**Carlos Realtor** is a premium real estate broker webapp for the Dominican Republic market. UI language is Spanish throughout.
 
 ### Stack
 - Next.js 16 App Router, React 19, TypeScript 6

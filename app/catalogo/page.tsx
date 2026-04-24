@@ -15,7 +15,7 @@ type CatalogoPageProps = {
   }>;
 };
 
-const CATALOG_TITLE = "Catálogo de Proyectos | Carlos Realto";
+const CATALOG_TITLE = "Catálogo de Proyectos | Carlos Realtor";
 const CATALOG_DESCRIPTION =
   "Explora primero los proyectos inmobiliarios y, desde cada desarrollo, entra a las propiedades disponibles.";
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ searchParams }: CatalogoPageProps): Pro
 
     if (project) {
       return {
-        title: `${project.name} | Proyectos | Carlos Realto`,
+        title: `${project.name} | Proyectos | Carlos Realtor`,
         description:
           project.headline ?? project.summary ?? project.description ?? CATALOG_DESCRIPTION,
         alternates: {

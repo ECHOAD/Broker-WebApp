@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
   if (!project) {
     return {
-      title: "Proyecto | Carlos Realto",
+      title: "Proyecto | Carlos Realtor",
       description: DEFAULT_PROJECT_DESCRIPTION,
     };
   }
